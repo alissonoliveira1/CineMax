@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useGlobalSearchParams } from "expo-router";
 import api from "./services";
 import { Shadow } from 'react-native-shadow-2';
+
+import { useRouter } from "expo-router";
 import {
   Text,
   View,
@@ -16,6 +18,8 @@ import {
 const { width } = Dimensions.get("window");
 
 export default function Info() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const params = useGlobalSearchParams();
   const { id } = params;
   const [seasons, setSeasons] = useState<any>([]);
@@ -73,6 +77,7 @@ export default function Info() {
         }
         const date = new Date(dadosResponse.data.first_air_date);
         setAno(date.getFullYear());
+        setLoading(false);
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
       }
@@ -102,9 +107,15 @@ export default function Info() {
     setTitleTemp(name);
     setIsPressed(!isPressed);
   };
-
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center",backgroundColor: "#010318", }}>
+        <Text style={{ color: "white" }}>Carregando...</Text>
+      </View>
+    );
+  }
   const renderEps = ({ item }: { item: any }) => (
-    <TouchableOpacity style={{alignItems:'center'}}>
+    <TouchableOpacity onPress={() => router.push(`/VideoPlayer`)} style={{alignItems:'center'}}>
       <View style={styles.containerEpsAll}>
         <View style={styles.viewCapaEps}>
        

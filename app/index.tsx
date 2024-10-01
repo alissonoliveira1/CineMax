@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import { Shadow } from 'react-native-shadow-2';
+import { Shadow } from "react-native-shadow-2";
+import TMDBImage from "@/components/TMDBImage";
 import {
   Text,
   View,
@@ -10,6 +11,8 @@ import {
   Dimensions,
   StyleSheet,
   TouchableOpacity,
+  FlatList,
+  ListRenderItem,
 } from "react-native";
 import api from "./services";
 const { width } = Dimensions.get("window");
@@ -20,35 +23,30 @@ interface TVShow {
   id: string;
   backdrop_path: string;
   results: TVShow[];
-  name: string; 
+  name: string;
 }
 
 export default function Index() {
   const [loading, setLoading] = useState(true);
   const [movies, setMovies] = useState<TVShow[]>([]);
-  const[movieAcaoAventura, setMovieAcaoAventura] = useState<TVShow[]>([]);
-  const[movieTerror, setMovieTerror] = useState<TVShow[]>([]);
+  const [movieAcaoAventura, setMovieAcaoAventura] = useState<TVShow[]>([]);
+  const [movieTerror, setMovieTerror] = useState<TVShow[]>([]);
   const router = useRouter();
   const destaque = movies.slice(0, 1);
   const id = destaque.map((movie) => movie.id);
-  
+
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
-  const shadowOpt = {
-    width: width * 0.90,
-    height: 400,
-    color: "#181c44",
-    border: 100,
-    radius: 10,
-    opacity: 1,
-    
-    x: 0,
-    y: 0,
-  };
+
   useEffect(() => {
     const getMovies = async () => {
       try {
-        const [desenhoResponse,acaoeAvenResponse,terrorResponse, logoResponse] = await Promise.all([
+        const [
+          desenhoResponse,
+          acaoeAvenResponse,
+          terrorResponse,
+          logoResponse,
+        ] = await Promise.all([
           api.get("discover/tv", {
             params: {
               api_key: API_KEY,
@@ -70,15 +68,15 @@ export default function Index() {
               with_genres: 10765,
             },
           }),
-          api.get(`tv/${456}/images`, { params: { api_key: API_KEY} }),
-        ])
-       
+          api.get(`tv/${456}/images`, { params: { api_key: API_KEY } }),
+        ]);
+
         setLoading(false);
-      
+
         setMovies(desenhoResponse.data.results);
         setMovieAcaoAventura(acaoeAvenResponse.data.results);
         setMovieTerror(terrorResponse.data.results);
-         const logos = logoResponse.data.logos.filter(
+        const logos = logoResponse.data.logos.filter(
           (logo: any) => logo.iso_639_1 === "pt" || logo.iso_639_1 === "pt-BR"
         );
         if (logos.length > 0) {
@@ -93,10 +91,40 @@ export default function Index() {
 
     getMovies();
   }, []);
+  interface RenderCapasProps {
+    item: TVShow;
+    onPress: () => void; // função para o evento de clique
+  }
+
+  const RenderCapas: React.FC<RenderCapasProps> = React.memo(
+    ({ item, onPress }) => (
+      <View style={styles.imageContainer}>
+        <TouchableOpacity onPress={onPress}>
+          <TMDBImage
+            uri={`https://image.tmdb.org/t/p/original/${item.poster_path}`}
+          />
+        </TouchableOpacity>
+      </View>
+    )
+  );
+
+  const renderItem: ListRenderItem<TVShow> = ({ item }) => (
+    <RenderCapas
+      item={item}
+      onPress={() => router.push(`/info?id=${item.id}`)}
+    />
+  );
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#010318",
+        }}
+      >
         <Text style={{ color: "white" }}>Carregando...</Text>
       </View>
     );
@@ -104,11 +132,11 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container2}>
-      <ScrollView >
+      <ScrollView>
         <View style={styles.container}>
           {destaque.map((movie) => (
             <View style={styles.imageContainer2} key={movie.id}>
-              <Shadow offset={[ 0, 0]} startColor="#151941" distance={40} >
+              <Shadow offset={[0, 0]} startColor="#151941" distance={40}>
                 <Image
                   id="img"
                   style={styles.image2}
@@ -116,19 +144,18 @@ export default function Index() {
                     uri: `https://image.tmdb.org/t/p/original/${movie.poster_path}`,
                   }}
                 />
-                </Shadow >
-                 <View style={styles.containerButtonPrincipal}>
-                 <View >
-            <View style={styles.vwImg}>
-              {logoUrl !== null ? (
-                <Image source={{ uri: logoUrl }} style={styles.imgLogo} />
-              ) : (
-                <Text style={styles.text}>{movie.name}</Text>
-              )}
-            </View>
-         
-          </View>
-                  <View style={styles.containerbutton2}>
+              </Shadow>
+              <View style={styles.containerButtonPrincipal}>
+                <View>
+                  <View style={styles.vwImg}>
+                    {logoUrl !== null ? (
+                      <Image source={{ uri: logoUrl }} style={styles.imgLogo} />
+                    ) : (
+                      <Text style={styles.text}>{movie.name}</Text>
+                    )}
+                  </View>
+                </View>
+                <View style={styles.containerbutton2}>
                   <View style={styles.buttoninfo}>
                     <Text style={styles.buttontext2}>Assistir</Text>
                   </View>
@@ -139,82 +166,52 @@ export default function Index() {
                       <Text style={styles.buttontext}>Informações</Text>
                     </View>
                   </TouchableOpacity>
-                  </View>
                 </View>
+              </View>
             </View>
           ))}
         </View>
 
-        <View>
+        <View style={styles.containerCapa}>
           <Text style={styles.text}>Destaques</Text>
-          <ScrollView
-            horizontal
+
+          <FlatList
+            data={movies}
+            renderItem={renderItem}
+            initialNumToRender={6}
+            maxToRenderPerBatch={2}
+            keyExtractor={(item) => item.id}
+            horizontal={true}
             showsHorizontalScrollIndicator={false}
-            style={styles.horizontalScroll}
-          >
-            {movies.map((movie) => (
-              <View key={movie.id} style={styles.imageContainer}>
-                <TouchableOpacity
-                  onPress={() => router.push(`/info?id=${movie.id}`)}
-                >
-                  <Image
-                    style={styles.image}
-                    source={{
-                      uri: `https://image.tmdb.org/t/p/original/${movie.poster_path}`,
-                    }}
-                  />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
+          />
         </View>
 
-        <View>
+        <View style={styles.containerCapa}>
           <Text style={styles.text}>Filmes de ação e Aventura</Text>
-          <ScrollView
-            horizontal
+
+          <FlatList
+            data={movieAcaoAventura}
+            renderItem={renderItem}
+            initialNumToRender={6}
+            maxToRenderPerBatch={5}
+            keyExtractor={(item) => item.id}
+            horizontal={true}
             showsHorizontalScrollIndicator={false}
-            style={styles.horizontalScroll}
-          >
-            {movieAcaoAventura.map((movie) => (
-              <View key={movie.id} style={styles.imageContainer}>
-                <TouchableOpacity
-                    onPress={() => router.push(`/info?id=${movie.id}`)}
-                  >
-                <Image
-                  style={styles.image}
-                  source={{
-                    uri: `https://image.tmdb.org/t/p/original/${movie.poster_path}`,
-                  }}
-                />
-               </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
+          />
         </View>
 
-        <View>
+        <View style={styles.containerCapa}>
           <Text style={styles.text}>Filmes de terror</Text>
-          <ScrollView
-            horizontal
+
+          <FlatList
+            data={movieTerror}
+            renderItem={renderItem}
+            initialNumToRender={6}
+            maxToRenderPerBatch={2}
+            keyExtractor={(item) => item.id}
+            horizontal={true}
             showsHorizontalScrollIndicator={false}
-            style={styles.horizontalScroll}
-          >
-            {movieTerror.map((movie) => (
-              <View key={movie.id} style={styles.imageContainer}>
-                <TouchableOpacity
-                  onPress={() => router.push(`/info?id=${movie.id}`)}
-                >
-                  <Image
-                    style={styles.image}
-                    source={{
-                      uri: `https://image.tmdb.org/t/p/original/${movie.poster_path}`,
-                    }}
-                  />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -244,14 +241,14 @@ const styles = StyleSheet.create({
   },
   imageContainer2: {
     top: 0,
-   
+
     height: 350,
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
   },
   image2: {
-    width: width * 0.90,
+    width: width * 0.9,
     height: 350,
     borderRadius: 8,
     borderStyle: "solid",
@@ -266,25 +263,28 @@ const styles = StyleSheet.create({
   text: {
     color: "white",
     marginTop: 10,
+    marginBottom:5,
     marginLeft: 10,
+    fontWeight: "bold",
+    fontSize: 1,
   },
   containerButtonPrincipal: {
     position: "absolute",
     justifyContent: "flex-end",
     bottom: 0,
     alignItems: "center",
-    width: width * 0.90,
+    width: width * 0.9,
     height: 400,
     zIndex: 100,
     backgroundColor: "rgba(0, 0, 0, 0.171)",
   },
-  containerbutton2:{
-    width: width * 0.90,
+  containerbutton2: {
+    width: width * 0.9,
     justifyContent: "space-evenly",
     flexDirection: "row",
   },
-  buttoninfo:{
-    width: width * 0.40,
+  buttoninfo: {
+    width: width * 0.4,
     height: 40,
     backgroundColor: "rgb(255, 255, 255)",
     borderRadius: 3,
@@ -293,8 +293,8 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 10,
   },
-  buttoninfo2:{
-    width: width * 0.40,
+  buttoninfo2: {
+    width: width * 0.4,
     height: 40,
     backgroundColor: "rgba(75, 75, 75, 0.753)",
     borderRadius: 3,
@@ -303,25 +303,28 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 10,
   },
-  buttontext:{
+  buttontext: {
     color: "white",
-    fontSize:17,
+    fontSize: 17,
     fontWeight: "bold",
   },
-  buttontext2:{
+  buttontext2: {
     color: "black",
-    fontSize:17,
+    fontSize: 17,
     fontWeight: "bold",
   },
-  vwImg:{
-    width: width * 0.90,
+  vwImg: {
+    width: width * 0.9,
     flex: 1,
     justifyContent: "flex-end",
     alignItems: "center",
   },
-  imgLogo:{
+  imgLogo: {
     width: 200,
     height: 100,
     resizeMode: "contain",
+  },
+  containerCapa:{
+    marginBottom:20,
   },
 });
