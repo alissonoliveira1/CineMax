@@ -115,7 +115,7 @@ export default function Info() {
     );
   }
   const renderEps = ({ item }: { item: any }) => (
-    <TouchableOpacity onPress={() => router.push(`/VideoPlayer`)} style={{alignItems:'center'}}>
+    <TouchableOpacity onPress={() => router.push(`/info`)} style={{alignItems:'center'}}>
       <View style={styles.containerEpsAll}>
         <View style={styles.viewCapaEps}>
        

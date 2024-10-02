@@ -6,7 +6,7 @@ export default function VideoPlayer() {
   return (
     <View style={styles.container}>
       <Video
-        source={{ uri: 'https://superflixapi.dev/serie/84958/1/1#noEpList' }} // Substitua pela URL do seu vídeo
+        source={{ uri: 'https://vimeo.com/1009352975?autoplay=1' }} // Substitua pela URL do seu vídeo
         rate={1.0}
         volume={1.0}
         isMuted={false}

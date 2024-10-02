@@ -32,10 +32,10 @@ export default function Index() {
   const [movieAcaoAventura, setMovieAcaoAventura] = useState<TVShow[]>([]);
   const [movieTerror, setMovieTerror] = useState<TVShow[]>([]);
   const router = useRouter();
-  const destaque = movies.slice(0, 1);
-  const id = destaque.map((movie) => movie.id);
+  const [destaque, setDestaque] = useState<TVShow[]>([]);
 
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  console.log(logoUrl)
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function Index() {
           desenhoResponse,
           acaoeAvenResponse,
           terrorResponse,
-          logoResponse,
+          destaqueResponse,
         ] = await Promise.all([
           api.get("discover/tv", {
             params: {
@@ -54,6 +54,7 @@ export default function Index() {
               with_genres: 16,
             },
           }),
+          
           api.get("discover/tv", {
             params: {
               api_key: API_KEY,
@@ -68,29 +69,55 @@ export default function Index() {
               with_genres: 10765,
             },
           }),
-          api.get(`tv/${456}/images`, { params: { api_key: API_KEY } }),
+        
+
+          api.get("discover/tv", {
+            params: {
+              api_key: API_KEY,
+              language: "pt-BR",
+              with_genres: 16,
+            },
+          }),
         ]);
 
-        setLoading(false);
-
+        
         setMovies(desenhoResponse.data.results);
         setMovieAcaoAventura(acaoeAvenResponse.data.results);
         setMovieTerror(terrorResponse.data.results);
-        const logos = logoResponse.data.logos.filter(
-          (logo: any) => logo.iso_639_1 === "pt" || logo.iso_639_1 === "pt-BR"
-        );
-        if (logos.length > 0) {
-          setLogoUrl(
-            `https://image.tmdb.org/t/p/original${logos[0].file_path}`
-          );
-        }
+        setDestaque(destaqueResponse.data.results.slice(0, 1));
+        setLoading(false);
+   
       } catch (error) {
         console.error(error);
       }
     };
 
     getMovies();
-  }, []);
+  }, [API_KEY,api]);
+  useEffect(() => {
+    const fetchData = async () => {
+      if (destaque.length > 0) {
+        try {
+          const dadosResponse = await api.get(`tv/${destaque[0]?.id}/images`, {
+            params: { api_key: API_KEY },
+          });
+  
+          const logos = dadosResponse.data.logos.filter(
+            (logo: any) => logo.iso_639_1 === "pt" || logo.iso_639_1 === "pt-BR"
+          );
+          if (logos.length > 0) {
+            setLogoUrl(
+              `https://image.tmdb.org/t/p/original${logos[0].file_path}`
+            );
+          }
+         // Marque como carregado
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    };
+    fetchData();
+  }, [destaque,api]);
   interface RenderCapasProps {
     item: TVShow;
     onPress: () => void; // função para o evento de clique
@@ -109,6 +136,7 @@ export default function Index() {
   );
 
   const renderItem: ListRenderItem<TVShow> = ({ item }) => (
+   
     <RenderCapas
       item={item}
       onPress={() => router.push(`/info?id=${item.id}`)}
@@ -136,12 +164,12 @@ export default function Index() {
         <View style={styles.container}>
           {destaque.map((movie) => (
             <View style={styles.imageContainer2} key={movie.id}>
-              <Shadow offset={[0, 0]} startColor="#151941" distance={40}>
+              <Shadow offset={[0, 0]} startColor="#0d1857" distance={100}>
                 <Image
-                  id="img"
+                 
                   style={styles.image2}
                   source={{
-                    uri: `https://image.tmdb.org/t/p/original/${movie.poster_path}`,
+                    uri: `https://image.tmdb.org/t/p/original/${movie.backdrop_path}`,
                   }}
                 />
               </Shadow>
@@ -220,7 +248,9 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor:"transparent",
     marginTop: 30,
+    
   },
   container2: {
     flex: 1,
@@ -241,8 +271,7 @@ const styles = StyleSheet.create({
   },
   imageContainer2: {
     top: 0,
-
-    height: 350,
+   backgroundColor:'transparent',
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
@@ -252,10 +281,11 @@ const styles = StyleSheet.create({
     height: 350,
     borderRadius: 8,
     borderStyle: "solid",
-    borderColor: "rgb(112, 112, 112)",
-    borderWidth: 2,
+    borderColor: "rgb(197, 197, 197)",
+    borderWidth: 1,
     zIndex: 1,
     resizeMode: "cover",
+    elevation:10,
   },
   link: {
     flex: 1,
@@ -266,7 +296,7 @@ const styles = StyleSheet.create({
     marginBottom:5,
     marginLeft: 10,
     fontWeight: "bold",
-    fontSize: 1,
+    fontSize: 18,
   },
   containerButtonPrincipal: {
     position: "absolute",
@@ -274,14 +304,17 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: "center",
     width: width * 0.9,
-    height: 400,
+    height: 350,
     zIndex: 100,
+ 
+    borderRadius: 8,
     backgroundColor: "rgba(0, 0, 0, 0.171)",
   },
   containerbutton2: {
     width: width * 0.9,
     justifyContent: "space-evenly",
     flexDirection: "row",
+  
   },
   buttoninfo: {
     width: width * 0.4,
