@@ -5,7 +5,7 @@ interface TMDBImageProps {
   uri: string;
 }
 
-const TMDBImage: React.FC<TMDBImageProps> = ({ uri }) => {
+const DestaqueImage: React.FC<TMDBImageProps> = ({ uri }) => {
   const [loading, setLoading] = useState(true);
 
   return (
@@ -30,8 +30,8 @@ const TMDBImage: React.FC<TMDBImageProps> = ({ uri }) => {
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    width: 100,   
-    height: 150, 
+    width: 150,   
+    height: 270, 
     borderRadius: 5, 
   },
   image: {
@@ -49,4 +49,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default React.memo(TMDBImage);
+export default React.memo(DestaqueImage);

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useGlobalSearchParams } from "expo-router";
 import api from "./services";
-import { Shadow } from 'react-native-shadow-2';
-
+import { Shadow } from "react-native-shadow-2";
 import { useRouter } from "expo-router";
 import {
   Text,
@@ -13,6 +12,7 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions,
+  ImageBackground
 } from "react-native";
 
 const { width } = Dimensions.get("window");
@@ -31,7 +31,7 @@ export default function Info() {
   const [isPressed, setIsPressed] = useState(false);
   const [ano, setAno] = useState<number | null>(null);
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
-
+  const [ids_imdb, setIds_imdb] = useState<string | null>(null);
   const [dados, setDados] = useState<{
     name?: string;
     overview?: string;
@@ -44,19 +44,22 @@ export default function Info() {
   }>({});
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
- 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dadosResponse, logoResponse] = await Promise.all([
+        const [dadosResponse, logoResponse, idsExternos] = await Promise.all([
           api.get(`tv/${id}`, {
             params: { api_key: API_KEY, language: "pt-BR" },
           }),
           api.get(`tv/${id}/images`, { params: { api_key: API_KEY } }),
-        ]);
 
+          api.get(`tv/${id}/external_ids`, {
+            params: { api_key: API_KEY, language: "pt-BR" },
+          }),
+        ]);
+        setIds_imdb('383498');
         setDados(dadosResponse.data);
-        
+        console.log(idsExternos.data.imdb_id);
         const validSeasons = dadosResponse.data.seasons?.filter(
           (season: any) => season.name !== "Especiais"
         );
@@ -93,7 +96,11 @@ export default function Info() {
         const response = await api.get(`tv/${id}/season/${selectedSeason}`, {
           params: { api_key: API_KEY, language: "pt-BR" },
         });
-        setEpisodes(response.data.episodes);
+        const availableEpisodes = response.data.episodes.filter((episode: { air_date: string | number | Date; }) => {
+          const airDate = new Date(episode.air_date);
+          return airDate <= new Date(); 
+        });
+        setEpisodes(availableEpisodes);
       } catch (error) {
         console.error("Erro ao buscar episódios:", error);
       }
@@ -109,23 +116,32 @@ export default function Info() {
   };
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center",backgroundColor: "#010318", }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#010318",
+        }}
+      >
         <Text style={{ color: "white" }}>Carregando...</Text>
       </View>
     );
   }
   const renderEps = ({ item }: { item: any }) => (
-    <TouchableOpacity onPress={() => router.push(`/info`)} style={{alignItems:'center'}}>
+    <TouchableOpacity
+      onPress={() => router.push(`/VideoPlayer?imdb_id=${id}&temp=${item.season_number}&ep=${item.episode_number}`)}
+      style={{ alignItems: "center" }}
+    >
       <View style={styles.containerEpsAll}>
         <View style={styles.viewCapaEps}>
-       
           <Image
             source={{
               uri: `https://image.tmdb.org/t/p/w500${item.still_path}`,
             }}
             style={styles.imageCapaEps}
           />
-          
+
           <View>
             <Text style={styles.nameEpsAll}>
               {item.episode_number}. {item.name}
@@ -134,7 +150,7 @@ export default function Info() {
           </View>
         </View>
         <View>
-          <Text style={styles.sobreEpsAll}>{item.overview}</Text>
+          <Text style={styles.sobreEpsAll}>{item.overview ? item.overview.split('.')[0] + '.' : ''}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -152,71 +168,78 @@ export default function Info() {
 
   return (
     <SafeAreaView style={styles.container}>
-    <FlatList
-      data={epsode}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={renderEps}
-      ListEmptyComponent={<Text>Nenhuma temporada encontrada.</Text>}
-      ListHeaderComponent={
-        <View>
-          <Image
-            source={{
-              uri: `https://image.tmdb.org/t/p/w500${dados.poster_path}`,
-            }}
-            style={styles.image}
-          />
-          
-          <View style={styles.containerLogo}>
-            <Shadow style={{zIndex:1}} offset={[ 0, 0]} startColor="#010318" distance={40} > 
-            <View style={styles.VwLogo}>
-              {logoUrl !== null ? (
-                <Image source={{ uri: logoUrl }} style={styles.logo} />
-              ) : (
-                <Text style={styles.text}>{dados.name}</Text>
-              )}
-            </View>
-           </Shadow>
-          </View>
-          
-          <View style={styles.info}>
-            <Text style={styles.textTemps}>
-              {dados.number_of_seasons} temporadas {ano}
-            </Text>
-          </View>
-          <View style={styles.ViewOverVW}>
-            <Text style={styles.textOverVW}>{dados.overview}</Text>
-          </View>
-          <TouchableOpacity
-            style={{ alignItems: "center" }}
-            onPress={() => setIsPressed(!isPressed)}
-          >
-            <View style={styles.button}>
-              <Text style={styles.textButton}>{titleTemp}</Text>
-            </View>
-          </TouchableOpacity>
-          <View style={styles.textoEps}>
-            <Text style={styles.textEps}>Episodios</Text>
-          </View>
-        
-        </View>
-      }
-      scrollEnabled={true}
-      nestedScrollEnabled={true}
-    />
-  
+      <FlatList
+        data={epsode}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderEps}
+        ListEmptyComponent={<Text>Nenhuma temporada encontrada.</Text>}
+        ListHeaderComponent={
+          <View>
+            <ImageBackground
+              source={{
+                uri: `https://image.tmdb.org/t/p/w500${dados.poster_path}`,
+              }}
+              style={styles.image}
+              
+            >
 
-    {isPressed && (
-      <View style={styles.containerTemp3}>
-        <FlatList
-          data={seasons}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderSeason}
-          ListEmptyComponent={<Text>Nenhuma temporada encontrada.</Text>}
-          scrollEnabled={true}
-        />
-      </View>
-    )}
-  </SafeAreaView>
+<View style={styles.overlay} />
+            </ImageBackground>
+
+            <View style={styles.containerLogo}>
+              <Shadow
+                style={{ zIndex: 1 }}
+                offset={[0, 0]}
+                startColor="#010318"
+                distance={40}
+              >
+                <View style={styles.VwLogo}>
+                  {logoUrl !== null ? (
+                    <Image source={{ uri: logoUrl }} style={styles.logo} />
+                  ) : (
+                    <Text style={styles.text}>{dados.name}</Text>
+                  )}
+                </View>
+              </Shadow>
+            </View>
+
+            <View style={styles.info}>
+              <Text style={styles.textTemps}>
+                {dados.number_of_seasons} temporadas {ano}
+              </Text>
+            </View>
+            <View style={styles.ViewOverVW}>
+              <Text style={styles.textOverVW}>{dados.overview ? dados.overview.split('.')[0] + '.' : ''}</Text>
+            </View>
+            <TouchableOpacity
+              style={{ alignItems: "center" }}
+              onPress={() => setIsPressed(!isPressed)}
+            >
+              <View style={styles.button}>
+                <Text style={styles.textButton}>{titleTemp}</Text>
+              </View>
+            </TouchableOpacity>
+            <View style={styles.textoEps}>
+              <Text style={styles.textEps}>Episodios</Text>
+            </View>
+          </View>
+        }
+        scrollEnabled={true}
+        nestedScrollEnabled={true}
+      />
+
+      {isPressed && (
+        <View style={styles.containerTemp3}>
+          <FlatList
+            data={seasons}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderSeason}
+            ListEmptyComponent={<Text>Nenhuma temporada encontrada.</Text>}
+            scrollEnabled={true}
+          />
+        </View>
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -237,7 +260,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "100%",
     height: "100%",
-    paddingTop: 40,
+    paddingTop: 60,
     paddingBottom: 20,
     backgroundColor: "rgba(0, 0, 0, 0.911)",
     zIndex: 100,
@@ -258,7 +281,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   logo: {
-    width: '100%',
+    width: "100%",
     height: 100,
     resizeMode: "contain",
   },
@@ -270,7 +293,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   VwLogo: {
-    width: width ,
+    width: width,
     height: 0,
     backgroundColor: "transparent",
     justifyContent: "center",
@@ -287,8 +310,10 @@ const styles = StyleSheet.create({
     width: width,
     height: 350,
     resizeMode: "cover",
-    
-    
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject, // Preenche toda a área da imagem
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Camada de cor preta com 30% de opacidade
   },
   info: {
     marginTop: 50,
@@ -308,8 +333,7 @@ const styles = StyleSheet.create({
   },
   textOverVW: {
     color: "#e4e4e4",
-    fontSize: 16,
-    
+    fontSize: 15,
   },
   textoEps: {
     width: width,
@@ -317,7 +341,7 @@ const styles = StyleSheet.create({
   },
   textEps: {
     marginLeft: 10,
-    marginBottom:10,
+    marginBottom: 10,
     fontWeight: "bold",
     fontSize: 18,
     marginTop: 5,
@@ -364,19 +388,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   containerEpsAll: {
-    backgroundColor: "rgb(27, 40, 48)",
+   
     width: width * 0.98,
     padding: 10,
     justifyContent: "flex-start",
     alignItems: "flex-start",
     marginBottom: 10,
     borderRadius: 8,
-   
   },
   epsVw: {
-
-   width: '100%' ,
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
-  },  
+  },
 });

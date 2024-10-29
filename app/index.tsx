@@ -1,7 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext  } from "react";
+
 import { useRouter } from "expo-router";
 import { Shadow } from "react-native-shadow-2";
 import TMDBImage from "@/components/TMDBImage";
+
+import Header from "@/components/header";
+import DestaqueImage from "@/components/DestaqueImage";
+import { AppContext } from "@/components/Apimages";
 import {
   Text,
   View,
@@ -11,10 +16,11 @@ import {
   Dimensions,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   ListRenderItem,
+  Animated,
 } from "react-native";
-import api from "./services";
+
+
 const { width } = Dimensions.get("window");
 
 interface TVShow {
@@ -27,100 +33,38 @@ interface TVShow {
 }
 
 export default function Index() {
-  const [loading, setLoading] = useState(true);
-  const [movies, setMovies] = useState<TVShow[]>([]);
-  const [movieAcaoAventura, setMovieAcaoAventura] = useState<TVShow[]>([]);
-  const [movieTerror, setMovieTerror] = useState<TVShow[]>([]);
-  const router = useRouter();
-  const [destaque, setDestaque] = useState<TVShow[]>([]);
-
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  console.log(logoUrl)
-  const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
-
-  useEffect(() => {
-    const getMovies = async () => {
-      try {
-        const [
-          desenhoResponse,
-          acaoeAvenResponse,
-          terrorResponse,
-          destaqueResponse,
-        ] = await Promise.all([
-          api.get("discover/tv", {
-            params: {
-              api_key: API_KEY,
-              language: "pt-BR",
-              with_genres: 16,
-            },
-          }),
-          
-          api.get("discover/tv", {
-            params: {
-              api_key: API_KEY,
-              language: "pt-BR",
-              with_genres: 10759,
-            },
-          }),
-          api.get("discover/tv", {
-            params: {
-              api_key: API_KEY,
-              language: "pt-BR",
-              with_genres: 10765,
-            },
-          }),
-        
-
-          api.get("discover/tv", {
-            params: {
-              api_key: API_KEY,
-              language: "pt-BR",
-              with_genres: 16,
-            },
-          }),
-        ]);
-
-        
-        setMovies(desenhoResponse.data.results);
-        setMovieAcaoAventura(acaoeAvenResponse.data.results);
-        setMovieTerror(terrorResponse.data.results);
-        setDestaque(destaqueResponse.data.results.slice(0, 1));
-        setLoading(false);
-   
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    getMovies();
-  }, [API_KEY,api]);
-  useEffect(() => {
-    const fetchData = async () => {
-      if (destaque.length > 0) {
-        try {
-          const dadosResponse = await api.get(`tv/${destaque[0]?.id}/images`, {
-            params: { api_key: API_KEY },
-          });
   
-          const logos = dadosResponse.data.logos.filter(
-            (logo: any) => logo.iso_639_1 === "pt" || logo.iso_639_1 === "pt-BR"
-          );
-          if (logos.length > 0) {
-            setLogoUrl(
-              `https://image.tmdb.org/t/p/original${logos[0].file_path}`
-            );
-          }
-         // Marque como carregado
-        } catch (error) {
-          console.error(error);
-        }
-      }
-    };
-    fetchData();
-  }, [destaque,api]);
+ 
+  const router = useRouter();
+
+
+  const scrollY = new Animated.Value(0);
+  
+  const {
+    logoUrl,
+    coresBackground,
+    movies,
+    movieAcaoAventura,
+    movieTerror,
+    destaque,
+    filmesAlta,
+  } = useContext(AppContext);
+console.log(logoUrl);
+  const scrollRoda = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: false }
+  );
+  console.log('Logo URL:', logoUrl);
+  console.log('Cores Background:', coresBackground);
+  console.log('Movies:', movies);
+  console.log('Ação e Aventura Movies:', movieAcaoAventura);
+  console.log('Terror Movies:', movieTerror);
+  console.log('Destaque:', destaque);
+  console.log('Filmes em Alta:', filmesAlta);
+
   interface RenderCapasProps {
     item: TVShow;
-    onPress: () => void; // função para o evento de clique
+    onPress: () => void;
   }
 
   const RenderCapas: React.FC<RenderCapasProps> = React.memo(
@@ -136,37 +80,27 @@ export default function Index() {
   );
 
   const renderItem: ListRenderItem<TVShow> = ({ item }) => (
-   
     <RenderCapas
       item={item}
       onPress={() => router.push(`/info?id=${item.id}`)}
     />
   );
 
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#010318",
-        }}
-      >
-        <Text style={{ color: "white" }}>Carregando...</Text>
-      </View>
-    );
-  }
+
 
   return (
     <SafeAreaView style={styles.container2}>
-      <ScrollView>
+      <Header scrollY={scrollY} />
+      <ScrollView onScroll={scrollRoda}>
         <View style={styles.container}>
-          {destaque.map((movie) => (
+          {destaque && destaque.map((movie) => (
             <View style={styles.imageContainer2} key={movie.id}>
-              <Shadow offset={[0, 0]} startColor="#0d1857" distance={100}>
+              <Shadow
+                offset={[0, 0]}
+                startColor={`rgb(${coresBackground})`}
+                distance={350}
+              >
                 <Image
-                 
                   style={styles.image2}
                   source={{
                     uri: `https://image.tmdb.org/t/p/original/${movie.backdrop_path}`,
@@ -174,14 +108,12 @@ export default function Index() {
                 />
               </Shadow>
               <View style={styles.containerButtonPrincipal}>
-                <View>
-                  <View style={styles.vwImg}>
-                    {logoUrl !== null ? (
-                      <Image source={{ uri: logoUrl }} style={styles.imgLogo} />
-                    ) : (
-                      <Text style={styles.text}>{movie.name}</Text>
-                    )}
-                  </View>
+                <View style={styles.vwImg}>
+                  {logoUrl !== null ? (
+                    <Image source={{ uri: logoUrl }} style={styles.imgLogo} />
+                  ) : (
+                    <Text style={styles.text}>{movie.name}</Text>
+                  )}
                 </View>
                 <View style={styles.containerbutton2}>
                   <View style={styles.buttoninfo}>
@@ -201,45 +133,90 @@ export default function Index() {
         </View>
 
         <View style={styles.containerCapa}>
-          <Text style={styles.text}>Destaques</Text>
-
-          <FlatList
-            data={movies}
-            renderItem={renderItem}
-            initialNumToRender={6}
-            maxToRenderPerBatch={2}
-            keyExtractor={(item) => item.id}
+          <Text style={styles.text}>Filmes em Alta</Text>
+          <ScrollView
             horizontal={true}
             showsHorizontalScrollIndicator={false}
-          />
+            decelerationRate="fast"
+            snapToInterval={150}
+          >
+            {filmesAlta && filmesAlta.map((movie) => (
+              <View style={styles.imageContainer} key={movie.id}>
+                <TouchableOpacity
+                  onPress={() => router.push(`/info?id=${movie.id}`)}
+                >
+                  <TMDBImage
+                    uri={`https://image.tmdb.org/t/p/original/${movie.poster_path}`}
+                  />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+        <View style={styles.containerCapa}>
+          <Text style={styles.text}>Destaque do dia</Text>
+          <ScrollView
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            decelerationRate="fast"
+            snapToInterval={150}
+          >
+            {movies && movies.map((movie) => (
+              <View style={styles.imageContainer} key={movie.id}>
+                <TouchableOpacity
+                  onPress={() => router.push(`/info?id=${movie.id}`)}
+                >
+                  <DestaqueImage
+                    uri={`https://image.tmdb.org/t/p/original/${movie.poster_path}`}
+                  />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         <View style={styles.containerCapa}>
           <Text style={styles.text}>Filmes de ação e Aventura</Text>
-
-          <FlatList
-            data={movieAcaoAventura}
-            renderItem={renderItem}
-            initialNumToRender={6}
-            maxToRenderPerBatch={5}
-            keyExtractor={(item) => item.id}
+          <ScrollView
             horizontal={true}
             showsHorizontalScrollIndicator={false}
-          />
+            decelerationRate="fast"
+            snapToInterval={150}
+          >
+            {movieAcaoAventura && movieAcaoAventura.map((movie) => (
+              <View style={styles.imageContainer} key={movie.id}>
+                <TouchableOpacity
+                  onPress={() => router.push(`/info?id=${movie.id}`)}
+                >
+                  <TMDBImage
+                    uri={`https://image.tmdb.org/t/p/original/${movie.poster_path}`}
+                  />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         <View style={styles.containerCapa}>
           <Text style={styles.text}>Filmes de terror</Text>
-
-          <FlatList
-            data={movieTerror}
-            renderItem={renderItem}
-            initialNumToRender={6}
-            maxToRenderPerBatch={2}
-            keyExtractor={(item) => item.id}
+          <ScrollView
             horizontal={true}
             showsHorizontalScrollIndicator={false}
-          />
+            decelerationRate="fast"
+            snapToInterval={150}
+          >
+            {movieTerror && movieTerror.map((movie) => (
+              <View style={styles.imageContainer} key={movie.id}>
+                <TouchableOpacity
+                  onPress={() => router.push(`/info?id=${movie.id}`)}
+                >
+                  <TMDBImage
+                    uri={`https://image.tmdb.org/t/p/original/${movie.poster_path}`}
+                  />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -248,13 +225,13 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor:"transparent",
-    marginTop: 30,
-    
+    backgroundColor: "transparent",
+    marginTop: 90,
   },
+
   container2: {
     flex: 1,
-    backgroundColor: "#010318",
+    backgroundColor: "rgb(5, 7, 32)",
   },
   horizontalScroll: {
     marginTop: 10,
@@ -263,15 +240,16 @@ const styles = StyleSheet.create({
     position: "relative",
     marginLeft: 10,
     marginRight: 3,
+    display: "flex",
   },
   image: {
     width: width * 0.3,
-    height: 150,
+    height: 80,
     borderRadius: 8,
   },
   imageContainer2: {
     top: 0,
-   backgroundColor:'transparent',
+    backgroundColor: "transparent",
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
@@ -285,7 +263,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     zIndex: 1,
     resizeMode: "cover",
-    elevation:10,
+    elevation: 10,
   },
   link: {
     flex: 1,
@@ -293,10 +271,10 @@ const styles = StyleSheet.create({
   text: {
     color: "white",
     marginTop: 10,
-    marginBottom:5,
+    marginBottom: 5,
     marginLeft: 10,
     fontWeight: "bold",
-    fontSize: 18,
+    fontSize: 20,
   },
   containerButtonPrincipal: {
     position: "absolute",
@@ -305,8 +283,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: width * 0.9,
     height: 350,
-    zIndex: 100,
- 
+    zIndex: 50,
+
     borderRadius: 8,
     backgroundColor: "rgba(0, 0, 0, 0.171)",
   },
@@ -314,7 +292,6 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     justifyContent: "space-evenly",
     flexDirection: "row",
-  
   },
   buttoninfo: {
     width: width * 0.4,
@@ -357,7 +334,7 @@ const styles = StyleSheet.create({
     height: 100,
     resizeMode: "contain",
   },
-  containerCapa:{
-    marginBottom:20,
+  containerCapa: {
+    marginBottom: 10,
   },
 });
