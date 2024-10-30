@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { useRouter } from "expo-router";
 import { View, TouchableOpacity } from "react-native";
+import { AppProvider } from '@/components/Apimages'; 
 import SearchIcon from "../assets/images/search.svg";
 export default function RootLayout() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function RootLayout() {
     position: "relative",
   };
   return (
+    <AppProvider>
     <Stack>
       <Stack.Screen
         name="index"
@@ -50,5 +52,6 @@ export default function RootLayout() {
         }}
       />
     </Stack>
+    </AppProvider>
   );
 }

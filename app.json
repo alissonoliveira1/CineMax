@@ -2,15 +2,15 @@
   "expo": {
     "name": "CineMax",
     "slug": "CineMax",
-    "version": "1.0.0",
+    "version": "1.5.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo_cinemax",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#003174"
     },
     "ios": {
       "jsEngine": "jsc",
@@ -20,7 +20,7 @@
       "jsEngine": "hermes",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#003174"
       },
       "package": "com.alissonoliveira1.CineMax"
     },
