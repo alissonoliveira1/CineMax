@@ -4,11 +4,11 @@
     "slug": "CineMax",
     "version": "1.5.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo_cinemax",
+    "icon": "./assets/images/logo_cinemax.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/splash_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#003174"
     },
@@ -19,7 +19,7 @@
     "android": {
       "jsEngine": "hermes",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logoMobile.png",
         "backgroundColor": "#003174"
       },
       "package": "com.alissonoliveira1.CineMax"

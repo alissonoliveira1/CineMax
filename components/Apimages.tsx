@@ -1,4 +1,10 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import axios from "axios";
 import api from "../app/services/index";
 
@@ -25,12 +31,9 @@ interface AppContextType {
   movieTerror: TVShow[];
   destaque: TVShow[];
   filmesAlta: TVShow[];
-
 }
 
-
 const DEFAULT_VALUE: AppContextType = {
-
   genres: [],
   logoUrl: null,
   coresBackground: ["9, 14, 82"],
@@ -43,9 +46,10 @@ const DEFAULT_VALUE: AppContextType = {
 
 export const AppContext = createContext<AppContextType>(DEFAULT_VALUE);
 
-  const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [loading, setLoading] = useState(true);
-  const [coresBackground, setCoresBackground] = useState<string[]>(["9, 14, 82"]);
+const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [coresBackground, setCoresBackground] = useState<string[]>([
+    "9, 14, 82",
+  ]);
   const [movies, setMovies] = useState<TVShow[]>([]);
   const [movieAcaoAventura, setMovieAcaoAventura] = useState<TVShow[]>([]);
   const [movieTerror, setMovieTerror] = useState<TVShow[]>([]);
@@ -56,106 +60,131 @@ export const AppContext = createContext<AppContextType>(DEFAULT_VALUE);
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
 
   useEffect(() => {
-    const getMovies = async () => {
-      setLoading(true);
+    const getInitialData = async () => {
       try {
- 
         const [
           desenhoResponse,
           acaoeAvenResponse,
           terrorResponse,
-          destaqueResponse,
           emAltaResponse,
+          genresResponse,
         ] = await Promise.all([
-          api.get("discover/tv", { params: { api_key: API_KEY, language: "pt-BR", with_genres: 16 } }),
-          api.get("discover/tv", { params: { api_key: API_KEY, language: "pt-BR", with_genres: 10759 } }),
-          api.get("discover/tv", { params: { api_key: API_KEY, language: "pt-BR", with_genres: 10765 } }),
-          api.get("discover/tv", {params: { api_key: API_KEY, language: "pt-BR", with_genres: 16 },}),
-          api.get("/movie/popular", { params: { api_key: API_KEY, language: "pt-BR", page: 1 } }),
+          api.get("discover/tv", {
+            params: {
+              api_key: API_KEY,
+              language: "pt-BR",
+              with_genres: 16,
+              page: 1,
+            },
+          }),
+          api.get("discover/tv", {
+            params: {
+              api_key: API_KEY,
+              language: "pt-BR",
+              with_genres: 10759,
+              page: 1,
+            },
+          }),
+          api.get("discover/tv", {
+            params: {
+              api_key: API_KEY,
+              language: "pt-BR",
+              with_genres: 10765,
+              page: 1,
+            },
+          }),
+          api.get("movie/popular", {
+            params: { api_key: API_KEY, language: "pt-BR", page: 1 },
+          }),
+          api.get("genre/tv/list", {
+            params: { api_key: API_KEY, language: "pt-BR" },
+          }),
         ]);
-        setDestaque(destaqueResponse.data.results.slice(0, 1));
-        setGenres(destaqueResponse.data.results.slice(0, 1).genres);
+
         setMovies(desenhoResponse.data.results);
         setMovieAcaoAventura(acaoeAvenResponse.data.results);
         setMovieTerror(terrorResponse.data.results);
         setFilmesAlta(emAltaResponse.data.results);
+        setGenres(genresResponse.data.genres);
+
         const allMovies = [
           ...desenhoResponse.data.results,
           ...acaoeAvenResponse.data.results,
           ...terrorResponse.data.results,
           ...emAltaResponse.data.results,
         ];
+        const filmesComLogoEGênero = [];
+        const idiomasPrioridade = ["pt-BR", "pt", "en-US", "en"]; // Ordem de preferência para idiomas
 
-      } catch (error) {
-        console.error("Erro ao buscar filmes:", error);
-     
-      }
-    };
-  
-    getMovies();
-  }, [API_KEY]);
-
-
-  useEffect(() => {
-    const fetchGenres = async () => {
-      try {
-        const response = await axios.get(`https://api.themoviedb.org/3/genre/tv/list?api_key=${API_KEY}&language=pt-BR`);
-        setGenres(response.data.genres); 
-      } catch (error) {
-        console.error("Erro ao buscar gêneros:", error);
-      }
-    };
-    fetchGenres(); 
- 
-  }, []);
-
-
-
-
-
-
-
-  useEffect(() => {
-    if (destaque.length > 0) {
-      const fetchData = async () => {
-        const imageUrl = `https://image.tmdb.org/t/p/original/${destaque[0].backdrop_path}`;
-        try {
-          const response = await axios.get(`https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`);
-          setCoresBackground(response.data.dominantColor || ["255, 255, 255"]);
-        } catch (error) {
-          console.error("Erro ao buscar as cores:", error);
-        }
-      };
-      fetchData();
-    }
-  }, [destaque]);
-  
-  useEffect(() => {
-    const fetchLogo = async () => {
-      if (destaque.length > 0) {
-        try {
-          const dadosResponse = await api.get(`tv/${destaque[0].id}/images`, {
-            params: { api_key: API_KEY },
-          });
-
-          const logos = dadosResponse.data.logos.filter(
-            (logo: any) => logo.iso_639_1 === "pt" || logo.iso_639_1 === "pt-BR"
-          );
-          if (logos.length > 0) {
-            setLogoUrl(`https://image.tmdb.org/t/p/original${logos[0].file_path}`);
+        const escolherLogoPorPrioridade = (logos: any[], idiomas: string[]) => {
+          for (const idioma of idiomas) {
+            const logo = logos.find((logo: any) => logo.iso_639_1 === idioma);
+            if (logo) return logo.file_path; // Retorna o caminho da primeira logo encontrada
           }
-        } catch (error) {
-          console.error("Erro ao buscar o logo:", error);
+          return null; // Retorna null se nenhuma logo for encontrada
+        };
+
+        // Busca de logo apenas para filmes e séries com gênero e imagem de fundo
+        for (const movie of allMovies) {
+          if (movie.genre_ids?.length > 0 && movie.backdrop_path) {
+            const logoData = await api.get(`tv/${movie.id}/images`, {
+              params: { api_key: API_KEY },
+            });
+            const logoPath = escolherLogoPorPrioridade(
+              logoData.data.logos,
+              idiomasPrioridade
+            );
+
+            // Adiciona o item se tiver logotipo
+            if (logoPath) {
+              filmesComLogoEGênero.push({ ...movie, logoPath });
+              if (filmesComLogoEGênero.length >= 10) break; // Limita a 10 itens
+            }
+          }
         }
+
+        if (filmesComLogoEGênero.length > 0) {
+          const randomIndex = Math.floor(
+            Math.random() * filmesComLogoEGênero.length
+          );
+          const destaqueSelecionado = filmesComLogoEGênero[randomIndex];
+          setDestaque([destaqueSelecionado]);
+          setLogoUrl(
+            `https://image.tmdb.org/t/p/original${destaqueSelecionado.logoPath}`
+          );
+
+          // Define cores de fundo com base no backdrop_path do item selecionado
+          const backdropPath = destaqueSelecionado.backdrop_path;
+          if (backdropPath) {
+            const imageUrl = `https://image.tmdb.org/t/p/original${backdropPath}`;
+            const colorResponse = await axios.get(
+              `https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`
+            );
+            setCoresBackground(
+              colorResponse.data.dominantColor || ["255, 255, 255"]
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados:", error);
       }
     };
-    fetchLogo();
-  }, [destaque]);
 
+    getInitialData();
+  }, []);
 
   return (
     <AppContext.Provider
-      value={{genres, logoUrl, coresBackground, movies, movieAcaoAventura, movieTerror, destaque, filmesAlta }}
+      value={{
+        genres,
+        logoUrl,
+        coresBackground,
+        movies,
+        movieAcaoAventura,
+        movieTerror,
+        destaque,
+        filmesAlta,
+      }}
     >
       {children}
     </AppContext.Provider>
@@ -163,10 +192,10 @@ export const AppContext = createContext<AppContextType>(DEFAULT_VALUE);
 };
 
 const useAppContext = () => {
-    const context = useContext(AppContext);
-    if (!context) {
-      throw new Error('useAppContext must be used within an AppProvider');
-    }
-    return context;
-  };
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error("useAppContext must be used within an AppProvider");
+  }
+  return context;
+};
 export { AppProvider, useAppContext };

@@ -22,6 +22,7 @@ import {
 const { width } = Dimensions.get("window");
 
 export default function Index() {
+  const [loading, setLoading] = useState(true);
   const {
     genres,
     logoUrl,
@@ -32,7 +33,7 @@ export default function Index() {
     destaque,
     filmesAlta,
   } = useContext(AppContext);
-
+console.log(logoUrl)
   const getGenreNames = (genreIds: number[]) => {
     return genreIds
       .map((id) => genres.find((genre) => genre.id === id)?.name) // Busca o nome do gênero
@@ -46,7 +47,7 @@ export default function Index() {
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
     { useNativeDriver: false }
   );
-  const [loading, setLoading] = useState(true);
+  
   useEffect(() => {
     const loadData = async () => {
       await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -55,7 +56,7 @@ export default function Index() {
 
     loadData();
   }, []);
-  console.log(destaque);
+
   if (loading)
     return (
       <View style={styles.loadingContainer}>
@@ -66,6 +67,13 @@ export default function Index() {
     <SafeAreaView style={styles.container2}>
       <Header scrollY={scrollY} />
       <ScrollView onScroll={scrollRoda}>
+
+        <View style={styles.opcoesSerieFilme}>
+          <View style={styles.viewFilmesSeries}><Text style={styles.textoFilmesSeries}>Inicio</Text></View>
+          <View style={styles.viewFilmesSeries}><Text style={styles.textoFilmesSeries}>Séries</Text></View>
+          <View style={styles.viewFilmesSeries}><Text style={styles.textoFilmesSeries}>Filmes</Text></View>
+          <View style={styles.viewFilmesSeries}><Text style={styles.textoFilmesSeries}>Crianças & Familia</Text></View>
+        </View>
         <View style={styles.container}>
           {destaque &&
             destaque.map((movie) => (
@@ -80,6 +88,7 @@ export default function Index() {
                     style={styles.image2}
                     source={{
                       uri: `https://image.tmdb.org/t/p/original/${movie.backdrop_path}`,
+                      cache: "reload"
                     }}
                   >
                     <View style={{width: width * 0.9,backfaceVisibility:'hidden'}}>
@@ -94,7 +103,7 @@ export default function Index() {
                         {logoUrl !== null ? (
                           <View style={{ alignItems: "center", justifyContent:'space-evenly' }}>
                             <Image
-                              source={{ uri: logoUrl }}
+                              source={{ uri: logoUrl ,cache: "reload"}}
                               style={styles.imgLogo}
                             />
                             <Text
@@ -236,7 +245,7 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: "transparent",
-    marginTop: 90,
+    marginTop: 30,
   },
 
   container2: {
@@ -350,5 +359,22 @@ const styles = StyleSheet.create({
   },
   containerCapa: {
     marginBottom: 10,
+  },
+  opcoesSerieFilme: {
+    flexDirection:'row',
+    zIndex:100,
+    justifyContent:'space-evenly',
+    marginTop:90
+  },
+  textoFilmesSeries: {
+   color:'#ffffff',
+   fontWeight:'bold',
+    fontSize:14
+  },
+  viewFilmesSeries:{
+   borderBottomWidth:1,
+   borderColor:'#ffffff', 
+   
+   paddingBottom:5
   },
 });

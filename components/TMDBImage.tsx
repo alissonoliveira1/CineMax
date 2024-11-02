@@ -19,9 +19,9 @@ const TMDBImage: React.FC<TMDBImageProps> = ({ uri }) => {
     style={styles.image}
     source={{
       uri: uri,
- 
+      cache: "reload"
     }}
-   
+    onLoad={() => setLoading(false)}
   />
   </View>
   );

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Image, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useState } from "react";
+import { View, Image, ActivityIndicator, StyleSheet } from "react-native";
 
 interface TMDBImageProps {
   uri: string;
@@ -10,41 +10,38 @@ const DestaqueImage: React.FC<TMDBImageProps> = ({ uri }) => {
 
   return (
     <View style={styles.container}>
-    {loading && (
-      <View style={styles.placeholder}>
-        <ActivityIndicator size="large" color="#5c5c5c" />
-      </View>
-    )}
-    <Image
-    style={styles.image}
-    source={{
-      uri: uri,
- 
-    }}
-   
-  />
-  </View>
+      {loading && (
+        <View style={styles.placeholder}>
+          <ActivityIndicator size="large" color="#5c5c5c" />
+        </View>
+      )}
+      <Image
+        style={styles.image}
+        source={{ uri: uri, cache: "reload" }}
+        onLoad={() => setLoading(false)}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
-    width: 150,   
-    height: 270, 
-    borderRadius: 5, 
+    position: "relative",
+    width: 150,
+    height: 270,
+    borderRadius: 5,
   },
   image: {
-    width: '100%' ,  
-    height: '100%', 
+    width: "100%",
+    height: "100%",
     borderRadius: 5,
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   placeholder: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#02082c',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#02082c",
     borderRadius: 5,
   },
 });
