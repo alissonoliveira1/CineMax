@@ -3,6 +3,7 @@ import { memo } from "react";
 import Header from "@/components/header";
 import ImageDestaque from "@/components/ImageDestaque";
 import ListConteudo from "@/components/ListConteudo";
+import AplashInicial from "@/components/SplashInicial";
 import {
   Text,
   View,
@@ -31,10 +32,14 @@ import {
     loadData();
   }, []);
 
+
+
+
+
   if (loading)
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#ffffff" />
+        <AplashInicial />
       </View>
     );
   return (
