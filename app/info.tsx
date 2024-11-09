@@ -31,7 +31,7 @@ export default function Info() {
   const [isPressed, setIsPressed] = useState(false);
   const [ano, setAno] = useState<number | null>(null);
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
-  const [ids_imdb, setIds_imdb] = useState<string | null>(null);
+
   const [dados, setDados] = useState<{
     name?: string;
     overview?: string;
@@ -57,7 +57,7 @@ export default function Info() {
             params: { api_key: API_KEY, language: "pt-BR" },
           }),
         ]);
-        setIds_imdb('383498');
+    
         setDados(dadosResponse.data);
         console.log(idsExternos.data.imdb_id);
         const validSeasons = dadosResponse.data.seasons?.filter(
@@ -66,7 +66,7 @@ export default function Info() {
         setSeasons(validSeasons);
 
         const logos = logoResponse.data.logos.filter(
-          (logo: any) => logo.iso_639_1 === "pt" || logo.iso_639_1 === "pt-BR"
+            (logo: any) => logo.iso_639_1 === "pt" || logo.iso_639_1 === "pt-BR" || logo.iso_639_1 === "en" || logo.iso_639_1 === "en-US"
         );
         if (logos.length > 0) {
           setLogoUrl(

@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { Shadow } from "react-native-shadow-2";
  import { 
   View,
     StyleSheet,
@@ -19,6 +20,7 @@ import { useRouter } from "expo-router";
         inputRange: [0, 70],
         outputRange: ['transparent', '#050720bc'], 
         extrapolate: 'clamp',
+
       });
 
     const containerHeader: Animated.WithAnimatedObject<ViewStyle> = {
@@ -34,7 +36,7 @@ import { useRouter } from "expo-router";
         left: 0,
         right: 0,
       
-        
+      
         zIndex: 150,
         width: '100%',
         height: 70,

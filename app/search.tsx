@@ -1,4 +1,5 @@
-import { useState, useContext } from "react";
+import { useState,memo } from "react";
+import { useRouter } from "expo-router";
 import {
   Image,
   View,
@@ -7,10 +8,10 @@ import {
   TextInput,
   StyleSheet,
   Dimensions,
-  ScrollView,
+  VirtualizedList
 } from "react-native";
-import { AppContext } from "@/components/Apimages";
 import api from "./services";
+import HomeSearch from "@/components/HomeSearch";
 const { width } = Dimensions.get("window");
 
 interface TVShow {
@@ -23,52 +24,75 @@ interface TVShow {
 }
 
 function Search() {
-  const { movies } = useContext(AppContext);
+  const router = useRouter();
   const [seasonData, setSeasonData] = useState<Record<number, any>>({});
   const [search, setSearch] = useState("");
+  const currentDate = new Date().toISOString().split('T')[0];
   const [movies2, setMovies] = useState<TVShow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<unknown>(null);
+  
+
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
   const searchMovies = async () => {
-    setLoading(true);
+   
     try {
-      const [responseMovie, responseFilme] = await Promise.all([
-        api.get(`search/movie`, {
-          params: { api_key: API_KEY, query: search, language: "pt-BR" },
-        }),
-        api.get(`search/tv`, {
-          params: { api_key: API_KEY, query: search, language: "pt-BR" },
-        }),
-      ]);
-      const allResults = [
-        ...responseMovie.data.results.map((movie: TVShow) => ({
-          ...movie,
-          type: "movie",
-        })),
-        ...responseFilme.data.results.map((tvShow: TVShow) => ({
-          ...tvShow,
-          type: "tv",
-        })),
-      ];
+      const responseMovie = await api.get(`search/multi`, {
+          params: { api_key: API_KEY, query: search, language: "pt-BR"},
+        })
+        const filteredResults = responseMovie.data.results.filter((item:any) => {
+          const releaseDate = item.release_date || item.first_air_date
+          return item.backdrop_path && releaseDate && releaseDate <= currentDate;
+        });
+     setMovies(filteredResults);
       await Promise.all(
-        responseFilme.data.results.map(async (tvShow: any) => {
-          const seasonsResponse = await api.get(
-            `tv/${tvShow.id}?api_key=${API_KEY}`
-          );
-          setSeasonData((prev) => ({
-            ...prev,
-            [tvShow.id]: seasonsResponse.data.seasons.slice(0, 1),
-          }));
+        responseMovie.data.results.map(async (tvShow: any) => {
+          if(tvShow.media_type === 'tv'){ 
+            const seasonsResponse = await api.get(
+              `tv/${tvShow.id}?api_key=${API_KEY}`
+            );
+            setSeasonData((prev) => ({
+              ...prev,
+              [tvShow.id]: seasonsResponse.data.seasons.slice(0, 1),
+            }));
+          }
+        
         })
       );
-      setMovies(allResults);
+      
     } catch (error) {
-      setError(error);
+      console.log(error)
     }
-    setLoading(false);
+   
   };
-
+  const renderItem = ({item}: {item: TVShow}) => (
+    <TouchableOpacity onPress={()=> item.type === 'tv'? router.push(`/info?id=${item.id}`) : router.push(`/infoFilmes?id=${item.id}`)}  key={item.id}>
+    <View style={styles.results} >
+    <Image
+      style={styles.image}
+      source={{
+        uri: `https://image.tmdb.org/t/p/original${item.backdrop_path}`,
+        cache: "reload",
+      }}
+    />
+    <View>
+      <Text style={styles.textResults}>
+        {item.title || item.name}
+      </Text>
+      <Text style={styles.textResults}>
+        {item.type === "tv" && seasonData[item.id] && (
+          <Text>
+            {seasonData[item.id].map((season: any) => (
+              <Text key={season.id}>
+                <Text>Temporada {season.season_number}</Text>
+              </Text>
+            ))}
+          </Text>
+        )}
+      </Text>
+    </View>
+  </View>
+  </TouchableOpacity>
+  )
+console.log(movies2)
   return (
     <View style={styles.container}>
       <View style={styles.viewInput}>
@@ -83,51 +107,17 @@ function Search() {
       </View>
 
       {search.length > 0 ? (
-        <ScrollView>
-          <View style={styles.containerResults}>
-            {movies2.map((movie) => (
-              <View style={styles.results} key={movie.id}>
-                <Image
-                  style={styles.image}
-                  source={{
-                    uri: `https://image.tmdb.org/t/p/original${movie.backdrop_path}`,
-                    cache: "reload",
-                  }}
-                />
-                <View>
-                  <Text style={styles.textResults}>
-                    {movie.title || movie.name}
-                  </Text>
-                  <Text style={styles.textResults}>
-                    {movie.type === "tv" && seasonData[movie.id] && (
-                      <Text>
-                        {seasonData[movie.id].map((season: any) => (
-                          <Text key={season.id}>
-                            <Text>Temporada {season.season_number}</Text>
-                          </Text>
-                        ))}
-                      </Text>
-                    )}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
+        <VirtualizedList
+          data={movies2}
+          initialNumToRender={4}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          getItem={(data, index) => data[index]}
+          getItemCount={(data) => data.length}
+          horizontal={false}
+        />
       ) : (
-        <ScrollView contentContainerStyle={styles.containerScroll}>
-          {movies.map((movie) => (
-            <View style={styles.destaqueResults} key={movie.id}>
-              <Image
-                style={styles.imageDestaque}
-                source={{
-                  uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
-                  cache: "reload",
-                }}
-              />
-            </View>
-          ))}
-        </ScrollView>
+        <HomeSearch/>
       )}
     </View>
   );
@@ -170,13 +160,15 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   textResults: {
+   
     color: "white",
     fontSize: 14,
     fontWeight: "bold",
   },
   containerResults: {
     zIndex: 10,
-    width: width,
+    width: '70%',
+  
     marginTop: 80,
     padding: 10,
   },
@@ -185,17 +177,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  imageDestaque: {
-    width: 160,
-    height: 220,
-    resizeMode: "cover",
-    borderRadius: 5,
-  },
-  destaqueResults: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between", // Distribui os itens uniformemente
-    padding: 5,
-  },
 });
-export default Search;
+export default memo(Search);

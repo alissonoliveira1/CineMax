@@ -58,6 +58,13 @@ export default function RootLayout() {
           headerShown: false,
         }}
       />
+          <Stack.Screen
+        name="infoFilmes"
+        options={{
+          statusBarColor:'rgb(5, 7, 32)',
+          headerShown: false,
+        }}
+      />
     </Stack>
     </AppProvider>
   );
