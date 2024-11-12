@@ -170,7 +170,7 @@ const AppProvider: React.FC<{ children: ReactNode }> = React.memo(
                 `https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`
               );
               setCoresBackground(
-                colorResponse.data.dominantColor || ["255, 255, 255"]
+                colorResponse.data.dominantColor 
               );
             }
           }
@@ -201,12 +201,5 @@ const AppProvider: React.FC<{ children: ReactNode }> = React.memo(
   }
 );
 
-const useAppContext = () => {
-  const context = useContext(AppContext);
-  if (!context) {
-    throw new Error("useAppContext must be used within an AppProvider");
-  }
-  return context;
-};
 
-export { AppProvider, useAppContext };
+export { AppProvider };

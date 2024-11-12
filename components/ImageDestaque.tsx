@@ -1,30 +1,40 @@
-import React from "react";
-import { useContext } from "react";
 import {
   View,
   Text,
-
   ImageBackground,
   Dimensions,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator
 } from "react-native";
+import React from "react";
+import { useContext } from "react";
 import { Image } from 'expo-image';
+import { useRouter } from "expo-router";
 import { Shadow } from "react-native-shadow-2";
 import { AppContext } from "../components/Apimages";
-import { useRouter } from "expo-router";
+import { useState } from "react"; 
+
 const { width } = Dimensions.get("window");
 
 export default function ImageDestaque() {
   const router = useRouter();
   const { destaque, coresBackground, logoUrl, genres } = useContext(AppContext);
-
+  const [loading, setLoading] = useState(true);
   const getGenreNames = (genreIds: number[]) => {
     return genreIds
       .map((id) => genres.find((genre) => genre.id === id)?.name)
       .filter((name) => name)
       .join(" ° ");
   };
+  const handleImageLoad = () => {
+    return(
+      <View style={styles.placeholder}>
+      <ActivityIndicator size="large" color="#5c5c5c" />
+    </View>
+    )
+  }
+   
   return (
     <View style={styles.container}>
       {destaque.map((movie) => (
@@ -37,7 +47,7 @@ export default function ImageDestaque() {
             <ImageBackground
               key={movie.id}
               style={styles.image2}
-            
+              onLoadEnd={handleImageLoad}
               source={{
                 uri: `https://image.tmdb.org/t/p/original/${movie.backdrop_path}`,
                 cache: "reload",
@@ -65,6 +75,7 @@ export default function ImageDestaque() {
                             source={{ uri: logoUrl}}
                             cachePolicy={"memory"}
                             style={styles.imgLogo}
+                          
                           />
                           <Text
                             style={{
@@ -191,4 +202,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 20,
   },
+  placeholder: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#02082c',
+    borderRadius: 5,
+  },
+
 });
+

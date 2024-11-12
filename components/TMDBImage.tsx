@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
+
 interface TMDBImageProps {
   uri: string;
 }
@@ -9,26 +10,34 @@ const TMDBImage: React.FC<TMDBImageProps> = ({ uri }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+
+  useEffect(() => {
+    Image.prefetch(uri);
+  }, [uri]);
+
+ 
+
   return (
     <View style={styles.container}>
       {(loading || error) && (
         <View style={styles.placeholder}>
-          <ActivityIndicator size="large" color="#5c5c5c" />
-        </View>
+        <ActivityIndicator size="large" color="#5c5c5c" />
+      </View>
       )}
-      <Image
-        key={uri} // Força a re-renderização da imagem ao mudar o URI
-        style={styles.image}
-        source={{ uri}}
-        onLoadEnd={() => setLoading(false)}
-        onError={() => {
-          setLoading(false);
-          setError(true);
-        }}
-        contentFit='cover' // Define o modo de redimensionamento
-        cachePolicy={'memory'} // Define o modo de redimensionamento
-       
-      />
+      <View>
+        <Image
+          key={uri} 
+          style={styles.image}
+          source={{ uri }}
+          onLoadEnd={() => setLoading(false)}
+          onError={() => {
+            
+            setError(true);
+          }}
+          contentFit="cover"
+          cachePolicy="memory"
+        />
+      </View>
     </View>
   );
 };

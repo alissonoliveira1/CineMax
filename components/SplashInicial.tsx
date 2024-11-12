@@ -9,8 +9,8 @@ export default function AplashInicial() {
   useEffect(() => {
     async function prepare() {
       try {
-        // Pre-load fonts, make any API calls you need to do here
-        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simula um carregamento mais lento
+        
+        await new Promise((resolve) => setTimeout(resolve, 5000)); 
       } catch (e) {
         console.warn(e);
       } finally {

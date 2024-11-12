@@ -26,6 +26,7 @@ export default function RootLayout() {
     position: "relative",
   };
   return (
+
     <AppProvider>
     <Stack>
       <Stack.Screen
@@ -67,5 +68,6 @@ export default function RootLayout() {
       />
     </Stack>
     </AppProvider>
+  
   );
 }

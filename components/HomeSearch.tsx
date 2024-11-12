@@ -1,16 +1,17 @@
-import { FlatList,StyleSheet,Image } from "react-native";
+import { FlatList, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import api from "@/app/services";
 
 interface TMDB {
-    name: string;
-    id: number;
-    poster_path: string;
+  name: string;
+  id: number;
+  poster_path: string;
 }
 const HomeSearch = () => {
-    const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
-    const [movie, setMovie] = useState<TMDB[]>([]); 
+  const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
+  const [movie, setMovie] = useState<TMDB[]>([]);
   useEffect(() => {
     const Dados = async () => {
       try {
@@ -27,23 +28,23 @@ const HomeSearch = () => {
     Dados();
   }, []);
 
-const renderItem = ({ item }:{item:TMDB}) => {  
+  const renderItem = ({ item }: { item: TMDB }) => {
     return (
-        <View style={styles.destaqueResults} key={item.id}>
-            <Image
-                style={styles.imageDestaque}
-                source={{
-                    uri: `https://image.tmdb.org/t/p/original${item.poster_path}`,
-                    cache: "reload",
-                }}
-            />
-        </View>
+      <View style={styles.destaqueResults} key={item.id}>
+        <Image
+          style={styles.imageDestaque}
+          source={{
+            uri: `https://image.tmdb.org/t/p/original${item.poster_path}`,
+          }}
+          cachePolicy={"memory"}
+          contentFit={"cover"}
+        />
+      </View>
     );
-}
-
+  };
 
   return (
-    <View style={{paddingTop:80, alignItems:'center'}}>
+    <View style={{ paddingTop: 80, alignItems: "center" }}>
       <FlatList
         data={movie}
         keyExtractor={(item) => item.id.toString()}
@@ -56,17 +57,16 @@ const renderItem = ({ item }:{item:TMDB}) => {
 };
 export default HomeSearch;
 const styles = StyleSheet.create({
-
-    destaqueResults: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        justifyContent: "space-between", 
-        padding: 5,
-      },
-      imageDestaque: {
-        width: 160,
-        height: 220,
-        resizeMode: "cover",
-        borderRadius: 5,
-      },
-})
+  destaqueResults: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    padding: 5,
+  },
+  imageDestaque: {
+    width: 160,
+    height: 220,
+    resizeMode: "cover",
+    borderRadius: 5,
+  },
+});

@@ -1,5 +1,6 @@
 import { useGlobalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useContext } from "react";
+import axios from "axios";
 import {
   ImageBackground,
   Text,
@@ -10,6 +11,7 @@ import {
 } from "react-native";
 import { Shadow } from "react-native-shadow-2";
 import api from "./services";
+
 const { width } = Dimensions.get("window");
 function infoFilmes() {
   const params = useGlobalSearchParams();
@@ -18,6 +20,7 @@ function infoFilmes() {
   
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
   const { id } = params;
+  const [coresBackground, setCoresBackground] = useState<string[]>(["9, 14, 82"]);
   const [ano, setAno] = useState<number | null>(null);
   const [dados, setDados] = useState<{
     release_date?: number;
@@ -28,7 +31,8 @@ function infoFilmes() {
     genres?: [{ id: number; name: string }];
     first_air_date?: number;
   }>({});
-  console.log(dados)
+ 
+  console.log(dados.poster_path)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -47,7 +51,7 @@ function infoFilmes() {
         console.log(idsExternos.data.imdb_id);
 
         const logos = logoResponse.data.logos.filter(
-          (logo: any) => logo.iso_639_1 === "pt" || logo.iso_639_1 === "pt-BR" || logo.iso_639_1 === "en" || logo.iso_639_1 === "en-US"
+          (logo: any) => logo.iso_639_1 === "pt-BR" || logo.iso_639_1 === "en" || logo.iso_639_1 === "en-US"
         );
         if (logos.length > 0) {
           setLogoUrl(
@@ -63,6 +67,20 @@ function infoFilmes() {
     };
     fetchData();
   }, []);
+  useEffect(() => {
+    const fetchData = async () => {
+    
+         const imageUrl = `https://image.tmdb.org/t/p/w500${dados.poster_path}`;
+         const colorResponse = await axios.get(
+           `https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`
+         );
+         setCoresBackground(
+           colorResponse.data.dominantColor
+         );
+       
+    }
+    fetchData()
+   },[dados])
   return (
     <View style={styles.container1}>
       <ImageBackground
@@ -77,8 +95,8 @@ function infoFilmes() {
       <Shadow
                 style={{ zIndex: 1 }}
                 offset={[0, 0]}
-                startColor="#010318"
-                distance={40}
+                startColor={`rgb(${coresBackground})`}
+                distance={70}
               >
 
 <View style={styles.VwLogo}>

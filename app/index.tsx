@@ -11,7 +11,6 @@ import {
   SafeAreaView,
   StyleSheet,
   Animated,
-  ActivityIndicator,
 } from "react-native";
 
   const Index = () => {
