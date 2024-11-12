@@ -29,7 +29,11 @@ export default function ListConteudo() {
 
   const renderItem = ({ item }: { item: TVShow }) => (
     <View style={styles.imageContainer} key={item.id}>
-      <TouchableOpacity onPress={() => router.push(`/infoFilmes?id=${item.id}`)}>
+      <TouchableOpacity onPress={() =>
+        item.name
+          ? router.push(`/info?id=${item.id}`)
+          : router.push(`/infoFilmes?id=${item.id}`)
+      }>
         <TMDBImage uri={`https://image.tmdb.org/t/p/w300/${item.poster_path}`} />
       </TouchableOpacity>
     </View>

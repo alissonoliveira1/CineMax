@@ -1,9 +1,5 @@
 {
   "build": {
-    "development": {
-      "owner": "alissonoliveira1",
-      "workflow": "managed"
-    },
     "preview": {
       "android": {
         "buildType": "apk"
