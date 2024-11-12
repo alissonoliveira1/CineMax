@@ -1,17 +1,18 @@
-import { useState,memo } from "react";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import {
-  Image,
   View,
   TouchableOpacity,
   Text,
   TextInput,
   StyleSheet,
   Dimensions,
-  VirtualizedList
+  FlatList,
 } from "react-native";
+import { Image } from "expo-image";
 import api from "./services";
 import HomeSearch from "@/components/HomeSearch";
+
 const { width } = Dimensions.get("window");
 
 interface TVShow {
@@ -27,25 +28,30 @@ function Search() {
   const router = useRouter();
   const [seasonData, setSeasonData] = useState<Record<number, any>>({});
   const [search, setSearch] = useState("");
-  const currentDate = new Date().toISOString().split('T')[0];
+  const currentDate = new Date().toISOString().split("T")[0];
   const [movies2, setMovies] = useState<TVShow[]>([]);
-  
 
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
-  const searchMovies = async () => {
-   
+
+  const searchMovies = async (text: string) => {
+    setSearch(text); // Atualiza o estado de busca
+    if (text.length < 3) return; // Evita buscas com menos de 3 caracteres
+
     try {
-      const responseMovie = await api.get(`search/multi`, {
-          params: { api_key: API_KEY, query: search, language: "pt-BR"},
-        })
-        const filteredResults = responseMovie.data.results.filter((item:any) => {
-          const releaseDate = item.release_date || item.first_air_date
-          return item.backdrop_path && releaseDate && releaseDate <= currentDate;
-        });
-     setMovies(filteredResults);
+      const responseMovie = await api.get("search/multi", {
+        params: { api_key: API_KEY, query: text, language: "pt-BR" },
+      });
+
+      const filteredResults = responseMovie.data.results.filter((item: any) => {
+        const releaseDate = item.release_date || item.first_air_date;
+        return item.backdrop_path && releaseDate && releaseDate <= currentDate;
+      });
+
+      setMovies(filteredResults);
+
       await Promise.all(
         responseMovie.data.results.map(async (tvShow: any) => {
-          if(tvShow.media_type === 'tv'){ 
+          if (tvShow.media_type === "tv") {
             const seasonsResponse = await api.get(
               `tv/${tvShow.id}?api_key=${API_KEY}`
             );
@@ -54,45 +60,46 @@ function Search() {
               [tvShow.id]: seasonsResponse.data.seasons.slice(0, 1),
             }));
           }
-        
         })
       );
-      
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-   
   };
-  const renderItem = ({item}: {item: TVShow}) => (
-    <TouchableOpacity onPress={()=> item.type === 'tv'? router.push(`/info?id=${item.id}`) : router.push(`/infoFilmes?id=${item.id}`)}  key={item.id}>
-    <View style={styles.results} >
-    <Image
-      style={styles.image}
-      source={{
-        uri: `https://image.tmdb.org/t/p/original${item.backdrop_path}`,
-        cache: "reload",
-      }}
-    />
-    <View>
-      <Text style={styles.textResults}>
-        {item.title || item.name}
-      </Text>
-      <Text style={styles.textResults}>
-        {item.type === "tv" && seasonData[item.id] && (
-          <Text>
-            {seasonData[item.id].map((season: any) => (
-              <Text key={season.id}>
-                <Text>Temporada {season.season_number}</Text>
-              </Text>
-            ))}
-          </Text>
+
+  const renderItem = ({ item }: { item: TVShow }) => (
+    <TouchableOpacity
+      onPress={() =>
+        item.type === "tv"
+          ? router.push(`/info?id=${item.id}`)
+          : router.push(`/infoFilmes?id=${item.id}`)
+      }
+      key={item.id}
+    >
+      <View style={styles.results}>
+        {item.backdrop_path && (
+          <Image
+            style={styles.image}
+            source={{
+              uri: `https://image.tmdb.org/t/p/original${item.backdrop_path}`,
+            }}
+            cachePolicy={"memory"}
+          />
         )}
-      </Text>
-    </View>
-  </View>
-  </TouchableOpacity>
-  )
-console.log(movies2)
+        <View>
+          <Text style={styles.textResults}>{item.title || item.name}</Text>
+          {item.type === "tv" && seasonData[item.id] && (
+            <Text>
+              {seasonData[item.id].map((season: any) => (
+                <Text key={season.id}>Temporada {season.season_number}</Text>
+              ))}
+            </Text>
+          )}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.viewInput}>
@@ -101,39 +108,30 @@ console.log(movies2)
           placeholder="Encontre filmes e series"
           style={styles.inputText}
           value={search}
-          onChange={searchMovies}
-          onChangeText={(text) => setSearch(text)}
+          onChangeText={searchMovies} // Passa diretamente para o onChangeText
         />
       </View>
 
       {search.length > 0 ? (
-        <VirtualizedList
+        <FlatList
           data={movies2}
-          initialNumToRender={4}
           renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
-          getItem={(data, index) => data[index]}
-          getItemCount={(data) => data.length}
           horizontal={false}
+          initialNumToRender={4}
         />
       ) : (
-        <HomeSearch/>
+        <HomeSearch />
       )}
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "rgb(5, 7, 32)",
     flexDirection: "column",
-  },
-  containerScroll: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    paddingHorizontal: 2,
-    paddingTop: 80,
   },
   viewInput: {
     position: "absolute",
@@ -160,17 +158,9 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   textResults: {
-   
     color: "white",
     fontSize: 14,
     fontWeight: "bold",
-  },
-  containerResults: {
-    zIndex: 10,
-    width: '70%',
-  
-    marginTop: 80,
-    padding: 10,
   },
   results: {
     flexDirection: "row",
@@ -178,4 +168,5 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 });
-export default memo(Search);
+
+export default Search;

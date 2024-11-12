@@ -5,15 +5,15 @@ import {
   Dimensions,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import React from "react";
 import { useContext } from "react";
-import { Image } from 'expo-image';
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Shadow } from "react-native-shadow-2";
 import { AppContext } from "../components/Apimages";
-import { useState } from "react"; 
+import { useState } from "react";
 
 const { width } = Dimensions.get("window");
 
@@ -21,20 +21,14 @@ export default function ImageDestaque() {
   const router = useRouter();
   const { destaque, coresBackground, logoUrl, genres } = useContext(AppContext);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const getGenreNames = (genreIds: number[]) => {
     return genreIds
       .map((id) => genres.find((genre) => genre.id === id)?.name)
       .filter((name) => name)
       .join(" ° ");
   };
-  const handleImageLoad = () => {
-    return(
-      <View style={styles.placeholder}>
-      <ActivityIndicator size="large" color="#5c5c5c" />
-    </View>
-    )
-  }
-   
+
   return (
     <View style={styles.container}>
       {destaque.map((movie) => (
@@ -46,13 +40,23 @@ export default function ImageDestaque() {
           >
             <ImageBackground
               key={movie.id}
+            
               style={styles.image2}
-              onLoadEnd={handleImageLoad}
+              onLoadEnd={() => setLoading(false)}
+              onError={() => {
+                setError(true);
+              }}
               source={{
                 uri: `https://image.tmdb.org/t/p/original/${movie.backdrop_path}`,
                 cache: "reload",
               }}
             >
+            
+              {(loading || error) && (
+                <View style={styles.placeholder}>
+                  <ActivityIndicator size="large" color="#5c5c5c" />
+                </View>
+              )}
               <View
                 style={{ width: width * 0.9, backfaceVisibility: "hidden" }}
               >
@@ -72,10 +76,9 @@ export default function ImageDestaque() {
                           }}
                         >
                           <Image
-                            source={{ uri: logoUrl}}
+                            source={{ uri: logoUrl }}
                             cachePolicy={"memory"}
                             style={styles.imgLogo}
-                          
                           />
                           <Text
                             style={{
@@ -204,11 +207,9 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#02082c',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#02082c",
     borderRadius: 5,
   },
-
 });
-

@@ -1,7 +1,6 @@
-import { FlatList, StyleSheet } from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
-import { View } from "react-native";
 import api from "@/app/services";
 
 interface TMDB {
@@ -9,9 +8,11 @@ interface TMDB {
   id: number;
   poster_path: string;
 }
+
 const HomeSearch = () => {
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
   const [movie, setMovie] = useState<TMDB[]>([]);
+
   useEffect(() => {
     const Dados = async () => {
       try {
@@ -23,7 +24,9 @@ const HomeSearch = () => {
           },
         });
         setMovie(response.data.results);
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+      }
     };
     Dados();
   }, []);
@@ -36,8 +39,8 @@ const HomeSearch = () => {
           source={{
             uri: `https://image.tmdb.org/t/p/original${item.poster_path}`,
           }}
-          cachePolicy={"memory"}
-          contentFit={"cover"}
+          cachePolicy={'memory'}// Utilizando cache mais eficiente
+          contentFit="cover"
         />
       </View>
     );
@@ -49,13 +52,16 @@ const HomeSearch = () => {
         data={movie}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
-        initialNumToRender={4}
+        initialNumToRender={6}
         numColumns={2}
+        removeClippedSubviews={true} // Otimização de renderização
       />
     </View>
   );
 };
+
 export default HomeSearch;
+
 const styles = StyleSheet.create({
   destaqueResults: {
     flexDirection: "row",
