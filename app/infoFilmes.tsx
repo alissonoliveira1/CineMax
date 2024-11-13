@@ -1,6 +1,7 @@
 import { useGlobalSearchParams } from "expo-router";
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+
 import {
   ImageBackground,
   Text,
@@ -13,60 +14,94 @@ import {
 import { Shadow } from "react-native-shadow-2";
 import api from "./services";
 
+type AgeRating =  "L" | "10" | "12" | "14" | "16" | "18" | "Classificação indisponível";
+
+// Tipo para uma data de lançamento em um país específico
+interface ReleaseDate {
+  certification: AgeRating;
+}
+
+// Tipo para o resultado de classificação por país
+interface CountryRelease {
+  iso_3166_1: string; // Código do país, ex: "BR", "US"
+  release_dates: ReleaseDate[];
+}
+
+// Tipo do objeto `movie`
+interface Movie {
+  title: string;
+  release_dates?: {
+    results: CountryRelease[];
+  };
+}
+
+interface MovieData {
+  title: string;
+  release_date?: string;
+  name?: string;
+  overview?: string;
+  poster_path?: string;
+  backdrop_path?: string;
+  production_companies?: { name: string; logo_path?: string }[];
+  genres?: { id: number; name: string }[];
+  first_air_date?: string;
+  runtime?: number;
+  logo_path?: string;
+  id?: number;
+}
+
+interface AgeRatingResult {
+  rating: AgeRating;
+  image: string | null;
+}
+
 const { width } = Dimensions.get("window");
-function infoFilmes() {
+
+function InfoFilmes() {
   const params = useGlobalSearchParams();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ano, setAno] = useState<number | null>(null);
+  const [classificacao, setClassificacao] = useState<string | null>(null);
+  const [classificacaoImagem, setClassificacaoImagem] = useState<any>(null);
+  const [dados, setDados] = useState<MovieData>({
+    title: "",
+    release_date: undefined,
+    name: undefined,
+    overview: undefined,
+    poster_path: undefined,
+    backdrop_path: undefined,
+    production_companies: undefined,
+    genres: undefined,
+    first_air_date: undefined,
+    runtime: undefined,
+    logo_path: undefined,
+  });
+  const [coresBackground, setCoresBackground] = useState<string[]>(["5, 7, 32"]);
 
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
   const { id } = params;
-  const [coresBackground, setCoresBackground] = useState<string[]>([
-    "5, 7, 32",
-  ]);
-  const [ano, setAno] = useState<number | null>(null);
-  const [dados, setDados] = useState<{
-    release_date?: number;
-    name?: string;
-    overview?: string;
-    poster_path?: string;
-    backdrop_path?: string;
-    production_companies?: [{ name: string; logo_path?: string }];
-    genres?: [{ id: number; name: string }];
-    first_air_date?: number;
-    runtime?: number;
-    logo_path?: string;
-  }>({});
 
-  console.log(dados.poster_path);
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dadosResponse, logoResponse, idsExternos] = await Promise.all([
+        const [dadosResponse, logoResponse] = await Promise.all([
           api.get(`movie/${id}`, {
             params: { api_key: API_KEY, language: "pt-BR" },
           }),
           api.get(`movie/${id}/images`, { params: { api_key: API_KEY } }),
-
-          api.get(`movie/${id}/external_ids`, {
-            params: { api_key: API_KEY, language: "pt-BR" },
-          }),
         ]);
 
         setDados(dadosResponse.data);
 
         const logos = logoResponse.data.logos.filter(
-          (logo: any) =>
-            logo.iso_639_1 === "pt-BR" ||
-            logo.iso_639_1 === "en" ||
-            logo.iso_639_1 === "en-US"
+          (logo: any) => logo.iso_639_1 === "pt-BR" || logo.iso_639_1 === "en" || logo.iso_639_1 === "en-US"
         );
         if (logos.length > 0) {
-          setLogoUrl(
-            `https://image.tmdb.org/t/p/original${logos[0].file_path}`
-          );
+          setLogoUrl(`https://image.tmdb.org/t/p/original${logos[0].file_path}`);
         }
-        const date = new Date(dadosResponse.data.release_date);
+
+        const date = new Date(dadosResponse.data.release_date ?? "");
         setAno(date.getFullYear());
         setLoading(false);
       } catch (error) {
@@ -77,23 +112,84 @@ function infoFilmes() {
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const imageUrl = `https://image.tmdb.org/t/p/w500${dados.poster_path}`;
-      const colorResponse = await axios.get(
-        `https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`
-      );
-      setCoresBackground(colorResponse.data.dominantColor);
+    const fetchBackgroundColors = async () => {
+      if (dados.poster_path) {
+        const imageUrl = `https://image.tmdb.org/t/p/w500${dados.poster_path}`;
+        try {
+          const colorResponse = await axios.get(
+            `https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`
+          );
+          setCoresBackground(colorResponse.data.dominantColor);
+        } catch (error) {
+          console.error("Erro ao buscar cores de fundo:", error);
+        }
+      }
     };
-    fetchData();
+    fetchBackgroundColors();
   }, [dados]);
+
   function formatRuntime() {
     if (dados.runtime !== undefined) {
       const hours = Math.floor(dados.runtime / 60);
       const mins = dados.runtime % 60;
       return `${hours}h${mins.toString().padStart(2, "0")}min`;
     }
-    return "Runtime not available";
+    return "sem duração";
   }
+
+  const ageRatingImages: Record<AgeRating, any> = {
+    "L": require("../assets/images/L.png"),
+    "10": require("../assets/images/NR10.png"),
+    "12": require("../assets/images/NR12.png"),
+    "14": require("../assets/images/NR14.png"),
+    "16": require("../assets/images/NR16.png"),
+    "18": require("../assets/images/NR18.png"),
+    "Classificação indisponível": null,
+  };
+ 
+  useEffect(() => {
+    const fetchClassificacao = async () => {
+      try {
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/movie/${dados.id}/release_dates`,
+          {
+            params: { api_key: API_KEY },
+          }
+        );
+
+        const releaseDates = response.data.results.find(
+          (country:any) => country.iso_3166_1 === "BR" // busca classificação para o Brasil
+        );
+
+        if (releaseDates) {
+          const certification = releaseDates.release_dates.find(
+            (release:any) => release.certification
+          )?.certification;
+
+          if (certification) {
+            setClassificacao(certification);
+
+            // Verifica a imagem correspondente à classificação
+            const image = ageRatingImages[certification as AgeRating] || ageRatingImages["Classificação indisponível"];
+            setClassificacaoImagem(image);
+          } else {
+            setClassificacao("Classificação indisponível");
+            setClassificacaoImagem(ageRatingImages["Classificação indisponível"]);
+          }
+        } else {
+          setClassificacao("Classificação indisponível");
+          setClassificacaoImagem(ageRatingImages["Classificação indisponível"]);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar a classificação:", error);
+        setClassificacao("Classificação indisponível");
+        setClassificacaoImagem(ageRatingImages["Classificação indisponível"]);
+      }
+    };
+
+    fetchClassificacao();
+  }, [dados.id]);
+  console.log( )
   return (
     <View style={styles.container1}>
       <ImageBackground
@@ -104,47 +200,64 @@ function infoFilmes() {
       >
         <View style={styles.overlay} />
       </ImageBackground>
-     
-        <Shadow
-          style={{ zIndex: 1 }}
-          offset={[0, 0]}
-          startColor={`rgb(${coresBackground})`}
-          distance={70}
-        >
-     
-        </Shadow>
-  
-      <View style={styles.containerInfos}>
-      <View style={styles.VwLogo}>
-            {logoUrl !== null ? (
-              <Image source={{ uri: logoUrl }} style={styles.logo} />
-            ) : (
-              <Text style={styles.text}>{dados.name}</Text>
-            )}
-          </View>
-        <View style={styles.infosFilmes}>
-            <Text style={styles.textInfos}>{formatRuntime()}</Text>
 
-            <Text style={styles.textInfos}>
+      <Shadow
+        style={{ zIndex: 1 }}
+        offset={[0, 0]}
+        startColor={`rgb(${coresBackground})`}
+        distance={70}
+      ></Shadow>
+
+      <View style={styles.containerInfos}>
+        <View style={styles.VwLogo}>
+          {logoUrl !== null ? (
+            <Image source={{ uri: logoUrl }} style={styles.logo} />
+          ) : (
+            <Text style={styles.text}>{dados.name}</Text>
+          )}
+        </View>
+        <View style={styles.infosFilmes}>
+        {classificacaoImagem ? (
+          <Image
+          source={classificacaoImagem}
+            style={styles.classEtaria}
+          />
+        ) : null}
+          <Text style={styles.textInfos}>{formatRuntime()}</Text>
+
+          <Text style={styles.textInfos}>
             {ano ? ano : "Data não disponível"}
           </Text>
-          
-          {dados.production_companies && dados.production_companies[0]?.logo_path ? (
-              <Image style={styles.logoProdutora} source={{uri: `https://image.tmdb.org/t/p/original${dados.production_companies[0].logo_path}`}}/>
-            ) : (
-              <Text style={styles.textInfos}>
+
+          {dados.production_companies &&
+          dados.production_companies[0]?.logo_path ? (
+            <Image
+              style={styles.logoProdutora}
+              source={{
+                uri: `https://image.tmdb.org/t/p/original${dados.production_companies[0].logo_path}`,
+              }}
+            />
+          ) : (
+            <Text style={styles.textInfos}>
               {dados.production_companies
                 ? dados.production_companies[0].name
                 : "Nome não disponível"}
             </Text>
-            )}
-        
-        
+          )}
         </View>
         <View style={styles.containerButton}>
-        <TouchableOpacity style={styles.buttonPlay}>
-          <Text style={styles.textButton}>Assistir</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.buttonPlay}>
+            <Text style={styles.textButton}>Assistir</Text>
+          </TouchableOpacity>
+        </View>
+        <View>
+          <TouchableOpacity>
+            <Text>salvar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Text>trailer</Text>
+          </TouchableOpacity>
+          <TouchableOpacity><Text>compartilhar</Text></TouchableOpacity>
         </View>
         <View style={styles.ViewOverVW}>
           <Text style={styles.textOverVW}>
@@ -162,7 +275,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgb(3, 4, 7)",
   },
   image: {
-    width: width ,
+    width: width,
     height: 350,
     resizeMode: "cover",
   },
@@ -181,13 +294,13 @@ const styles = StyleSheet.create({
   VwLogo: {
     width: width,
     height: 100,
-    marginBottom:15,
+    marginBottom: 15,
     backgroundColor: "transparent",
     justifyContent: "flex-start",
     alignItems: "flex-start",
   },
   logo: {
-    width: '95%',
+    width: "95%",
     height: 100,
     resizeMode: "contain",
   },
@@ -216,10 +329,10 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     paddingRight: 10,
     position: "relative",
-    bottom:50,
+    bottom: 50,
   },
   infosFilmes: {
-    width: width * 0.90,
+    width: width * 0.9,
     flexDirection: "row",
     gap: 10,
     marginLeft: 5,
@@ -227,25 +340,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonPlay: {
-    width: width * 0.90,
+    width: width * 0.9,
     height: 40,
     backgroundColor: "rgb(255, 255, 255)",
     borderRadius: 5,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 10,
-    
   },
-  textButton:{
-   color: "black",
+  textButton: {
+    color: "black",
     fontSize: 20,
     fontWeight: "bold",
-
   },
-  containerButton:{
-  justifyContent: "center",
-  alignItems: "center",
-  marginBottom:20,
+  containerButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
   },
   logoProdutora: {
     width: 50,
@@ -253,9 +364,14 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     borderRadius: 5,
   },
-  textInfos:{
+  textInfos: {
     color: "#ffffff",
     fontSize: 13,
+  },
+  classEtaria:{
+    width: 20,
+    height: 20,
+    resizeMode: "contain",
   }
 });
-export default infoFilmes;
+export default InfoFilmes;
