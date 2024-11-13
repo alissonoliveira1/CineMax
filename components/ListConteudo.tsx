@@ -10,7 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import TMDBImage from "./TMDBImage";
 import { AppContext } from "./Apimages";
-
+import DestaqueImage from "./DestaqueImage";
 const { width } = Dimensions.get("window");
 
 export default function ListConteudo() {
@@ -35,6 +35,17 @@ export default function ListConteudo() {
           : router.push(`/infoFilmes?id=${item.id}`)
       }>
         <TMDBImage uri={`https://image.tmdb.org/t/p/w300/${item.poster_path}`} />
+      </TouchableOpacity>
+    </View>
+  );
+  const renderItemDestaque = ({ item }: { item: TVShow }) => (
+    <View style={styles.imageContainer} key={item.id}>
+      <TouchableOpacity onPress={() =>
+        item.name
+          ? router.push(`/info?id=${item.id}`)
+          : router.push(`/infoFilmes?id=${item.id}`)
+      }>
+        <DestaqueImage uri={`https://image.tmdb.org/t/p/w300/${item.poster_path}`} />
       </TouchableOpacity>
     </View>
   );
@@ -70,10 +81,10 @@ export default function ListConteudo() {
       </View>
 
       <View style={styles.containerCapa}>
-        <Text style={styles.text}>Destaque do dia</Text>
+        <Text style={styles.text}>Destaque da semana</Text>
         <FlatList
           data={movies}
-          renderItem={renderItem}
+          renderItem={renderItemDestaque}
           keyExtractor={(item) => item.id.toString()}
           horizontal
           initialNumToRender={4}

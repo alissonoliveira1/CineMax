@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView
 } from "react-native";
 import React from "react";
 import { useContext } from "react";
