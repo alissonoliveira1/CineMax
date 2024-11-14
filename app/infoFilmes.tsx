@@ -13,8 +13,11 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  TouchableWithoutFeedback,
   ScrollView,
+  FlatList,
 } from "react-native";
+
 import { Shadow } from "react-native-shadow-2";
 import api from "./services";
 
@@ -179,90 +182,99 @@ function InfoFilmes() {
         style={styles.image}
       >
         <View style={styles.overlay} />
-        <ScrollView style={styles.scroll}>
-          <Shadow
-            style={{ zIndex: 16 }}
-            offset={[0, 150]}
-            startColor={`rgb(3, 4, 7)`}
-            distance={150}
-            safeRender
-            paintInside={true}
-          >
-            <View style={{ width: width }}></View>
-          </Shadow>
-          <View style={styles.containerInfos}>
-            <View style={styles.VwLogo}>
-              {logoUrl ? (
-                <Image
-                  source={{ uri: logoUrl }}
-                  style={{
-                    width: fixedWidth,
-                    height: fixedWidth * aspectRatio,
-                    resizeMode: "contain",
-                  }}
-                />
-              ) : (
-                <Text style={styles.text}>{dados.name}</Text>
-              )}
-            </View>
-            <View style={styles.infosFilmes}>
-              {classificacaoImagem && (
-                <Image
-                  source={classificacaoImagem}
-                  style={styles.classEtaria}
-                />
-              )}
-              <Text style={styles.textInfos}>{formatRuntime()}</Text>
-              <Text style={styles.textInfos}>
-                {ano || "Data não disponível"}
-              </Text>
-
-              {dados.production_companies &&
-              dados.production_companies[0]?.logo_path ? (
-                <Image
-                  style={styles.logoProdutora}
-                  source={{
-                    uri: `https://image.tmdb.org/t/p/original${dados.production_companies[0].logo_path}`,
-                  }}
-                />
-              ) : (
+      </ImageBackground>
+      <FlatList
+        data={[{ key: "content" }]}
+        style={{ height: "100%", zIndex: 5 }}
+        renderItem={() => (
+          <View style={{ paddingTop: 300 }}>
+            <Shadow
+              style={{ zIndex: 16 }}
+              offset={[0, 150]}
+              startColor={`rgb(3, 4, 7)`}
+              distance={150}
+              safeRender
+              paintInside={true}
+            >
+              <View style={{ width: width }}></View>
+            </Shadow>
+            <View style={styles.containerInfos}>
+              <View style={styles.VwLogo}>
+                {logoUrl ? (
+                  <Image
+                    source={{ uri: logoUrl }}
+                    style={{
+                      width: fixedWidth,
+                      height: fixedWidth * aspectRatio,
+                      resizeMode: "contain",
+                    }}
+                  />
+                ) : (
+                  <Text style={styles.text}>{dados.name}</Text>
+                )}
+              </View>
+              <View style={styles.infosFilmes}>
+                {classificacaoImagem && (
+                  <Image
+                    source={classificacaoImagem}
+                    style={styles.classEtaria}
+                  />
+                )}
+                <Text style={styles.textInfos}>{formatRuntime()}</Text>
                 <Text style={styles.textInfos}>
-                  {dados.production_companies
-                    ? dados.production_companies[0].name
-                    : "Nome não disponível"}
+                  {ano || "Data não disponível"}
                 </Text>
-              )}
-            </View>
-            <View style={{ backgroundColor: "rgb(3, 4, 7)" }}>
-              <View style={styles.containerButton}>
-                <TouchableOpacity style={styles.buttonPlay}>
-                  <Text style={styles.textButton}>Assistir</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.opcoesGerais}>
-                <TouchableOpacity style={styles.alinharOpcoes}>
-                  <FavSvg width={20} height={20} color={"white"} />
-                  <Text style={styles.textOpcoesGerais}>salvar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.alinharOpcoes}>
-                  <TrlSvg width={20} height={20} color={"white"} />
-                  <Text style={styles.textOpcoesGerais}>trailer</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.alinharOpcoes}>
-                  <CompSvg width={20} height={20} color={"white"} />
-                  <Text style={styles.textOpcoesGerais}>compartilhar</Text>
-                </TouchableOpacity>
-              </View>
 
-              <View style={styles.ViewOverVW}>
-                <Text style={styles.textOverVW}>
-                  {dados.overview ? dados.overview.split(".")[0] + "." : ""}
-                </Text>
+                {dados.production_companies &&
+                dados.production_companies[0]?.logo_path ? (
+                  <View style={styles.viewProdutora}>
+                    <Image
+                    style={styles.logoProdutora}
+                    source={{
+                      uri: `https://image.tmdb.org/t/p/original${dados.production_companies[0].logo_path}`,
+                    }}
+                  />
+                  </View>
+                ) : (
+                  <Text style={styles.textInfos}>
+                    {dados.production_companies
+                      ? dados.production_companies[0].name
+                      : "Nome não disponível"}
+                  </Text>
+                )}
+              </View>
+              <View style={{ backgroundColor: "rgb(3, 4, 7)" }}>
+                <View style={styles.containerButton}>
+                  <TouchableOpacity style={styles.buttonPlay}>
+                    <Text style={styles.textButton}>Assistir</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.opcoesGerais}>
+                  <TouchableOpacity style={styles.alinharOpcoes}>
+                    <FavSvg width={20} height={20} color={"white"} />
+                    <Text style={styles.textOpcoesGerais}>salvar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.alinharOpcoes}>
+                    <TrlSvg width={20} height={20} color={"white"} />
+                    <Text style={styles.textOpcoesGerais}>trailer</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.alinharOpcoes}>
+                    <CompSvg width={20} height={20} color={"white"} />
+                    <Text style={styles.textOpcoesGerais}>compartilhar</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.ViewOverVW}>
+                  <Text style={styles.textOverVW}>
+                    {dados.overview ? dados.overview.split(".")[0] + "." : ""}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </ScrollView>
-      </ImageBackground>
+        )}
+        keyExtractor={(item) => item.key}
+      />
     </View>
   );
 }
@@ -274,17 +286,16 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
-    overflow: "visible",
     height: "100%",
     zIndex: 1,
   },
   image: {
     width: width,
     height: 450,
-
+    position: "absolute",
     resizeMode: "cover",
     paddingTop: 300,
-    zIndex: 0,
+    zIndex: -1,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -325,7 +336,6 @@ const styles = StyleSheet.create({
   },
   containerInfos: {
     width: width,
-
     justifyContent: "flex-start",
   },
   infosFilmes: {
@@ -333,7 +343,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     marginLeft: 20,
-    marginTop: 0,
+    marginTop:20,
+    marginBottom: 20,
     alignItems: "center",
   },
   buttonPlay: {
@@ -343,7 +354,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 10,
+    zIndex: 0,
   },
   textButton: {
     color: "black",
@@ -354,14 +365,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
-
     zIndex: 0,
+  },
+  viewProdutora:{
+    padding:1,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 2,
+    backgroundColor: "#dfdfdf",
   },
   logoProdutora: {
     width: 50,
-    height: 50,
+    height: 20,
     resizeMode: "contain",
-    borderRadius: 5,
+    borderRadius: 2,
+    backgroundColor: "#dfdfdf",
+    padding:10,
   },
   textInfos: {
     color: "#ffffff",
