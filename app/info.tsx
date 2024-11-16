@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useGlobalSearchParams } from "expo-router";
 import api from "./services";
+import axios from "axios";
+import FavSvg from "../assets/images/star-fill.svg";
+import TrlSvg from "../assets/images/film.svg";
+import CompSvg from "../assets/images/share-fill.svg";
+import ListSemelhantes from "@/components/ListSemelhantes";
 import { Shadow } from "react-native-shadow-2";
 import { useRouter } from "expo-router";
+import Menu from "@/components/menu";
 import {
   Text,
   View,
@@ -12,26 +18,38 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions,
-  ImageBackground
+  ImageBackground,
 } from "react-native";
 
+const fixedWidth = Dimensions.get("window").width * 0.7;
+const aspectRatio = 1 / 3;
 const { width } = Dimensions.get("window");
+type AgeRating =
+  | "L"
+  | "10"
+  | "12"
+  | "14"
+  | "16"
+  | "18"
+  | "Classificação indisponível";
 
-export default function Info() {
+const Info = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const params = useGlobalSearchParams();
   const { id } = params;
   const [seasons, setSeasons] = useState<any>([]);
   const [titleTemp, setTitleTemp] = useState<string | null>(
-    seasons.length > 0 ? seasons[0].name : null
-  );
+    seasons.length > 0 ? seasons[0].name : null );
+  const [classificacaoImagem, setClassificacaoImagem] = useState<any>(null);
   const [epsode, setEpisodes] = useState<any>(null);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [isPressed, setIsPressed] = useState(false);
   const [ano, setAno] = useState<number | null>(null);
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
-
+  const [selectedOption, setSelectedOption] = useState<
+    "episodios" | "seriesSemelhantes"
+  >("episodios");
   const [dados, setDados] = useState<{
     name?: string;
     overview?: string;
@@ -41,6 +59,7 @@ export default function Info() {
     seasons?: [{ season_number: number; name: string }];
     number_of_seasons?: number;
     first_air_date?: number;
+    id?: number;
   }>({});
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
@@ -57,7 +76,7 @@ export default function Info() {
             params: { api_key: API_KEY, language: "pt-BR" },
           }),
         ]);
-    
+
         setDados(dadosResponse.data);
         console.log(idsExternos.data.imdb_id);
         const validSeasons = dadosResponse.data.seasons?.filter(
@@ -66,7 +85,11 @@ export default function Info() {
         setSeasons(validSeasons);
 
         const logos = logoResponse.data.logos.filter(
-            (logo: any) => logo.iso_639_1 === "pt" || logo.iso_639_1 === "pt-BR" || logo.iso_639_1 === "en" || logo.iso_639_1 === "en-US"
+          (logo: any) =>
+            logo.iso_639_1 === "pt" ||
+            logo.iso_639_1 === "pt-BR" ||
+            logo.iso_639_1 === "en" ||
+            logo.iso_639_1 === "en-US"
         );
         if (logos.length > 0) {
           setLogoUrl(
@@ -87,6 +110,49 @@ export default function Info() {
     };
     fetchData();
   }, [id]);
+  const ageRatingImages: Record<AgeRating, any> = {
+    L: require("../assets/images/L.png"),
+    "10": require("../assets/images/NR10.png"),
+    "12": require("../assets/images/NR12.png"),
+    "14": require("../assets/images/NR14.png"),
+    "16": require("../assets/images/NR16.png"),
+    "18": require("../assets/images/NR18.png"),
+    "Classificação indisponível": null,
+  };
+  const fetchClassificacao = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `https://api.themoviedb.org/3/tv/${dados.id}/content_ratings`,
+        {
+          params: { api_key: API_KEY },
+        }
+      );
+
+      const ratingData = response.data.results.find(
+        (country: any) => country.iso_3166_1 === "BR"
+      );
+
+      if (ratingData && ratingData.rating) {
+        const image =
+          ageRatingImages[ratingData.rating as AgeRating] ||
+          ageRatingImages["Classificação indisponível"];
+        setClassificacaoImagem(image);
+      } else {
+        setClassificacaoImagem(ageRatingImages["Classificação indisponível"]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar a classificação:", error);
+      setClassificacaoImagem(ageRatingImages["Classificação indisponível"]);
+    }
+  }, [dados.id]);
+
+  useEffect(() => {
+    if (dados.id) fetchClassificacao();
+  }, [dados.id, fetchClassificacao]);
+  console.log(classificacaoImagem);
+  useEffect(() => {
+    if (dados.id) fetchClassificacao();
+  }, [dados.id, fetchClassificacao]);
 
   useEffect(() => {
     if (selectedSeason === null) return;
@@ -96,10 +162,12 @@ export default function Info() {
         const response = await api.get(`tv/${id}/season/${selectedSeason}`, {
           params: { api_key: API_KEY, language: "pt-BR" },
         });
-        const availableEpisodes = response.data.episodes.filter((episode: { air_date: string | number | Date; }) => {
-          const airDate = new Date(episode.air_date);
-          return airDate <= new Date(); 
-        });
+        const availableEpisodes = response.data.episodes.filter(
+          (episode: { air_date: string | number | Date }) => {
+            const airDate = new Date(episode.air_date);
+            return airDate <= new Date();
+          }
+        );
         setEpisodes(availableEpisodes);
       } catch (error) {
         console.error("Erro ao buscar episódios:", error);
@@ -130,8 +198,13 @@ export default function Info() {
   }
   const renderEps = ({ item }: { item: any }) => (
     <TouchableOpacity
-      onPress={() => router.push(`/VideoPlayer?imdb_id=${id}&temp=${item.season_number}&ep=${item.episode_number}`)}
-      style={{ alignItems: "center" }}
+
+    onPress={() =>
+        router.push(
+          `/VideoPlayer?imdb_id=${id}&temp=${item.season_number}&ep=${item.episode_number}`
+        )
+      }
+      style={{ alignItems: "center",backgroundColor: "rgb(3, 4, 7)"  }}
     >
       <View style={styles.containerEpsAll}>
         <View style={styles.viewCapaEps}>
@@ -150,7 +223,9 @@ export default function Info() {
           </View>
         </View>
         <View>
-          <Text style={styles.sobreEpsAll}>{item.overview ? item.overview.split('.')[0] + '.' : ''}</Text>
+          <Text style={styles.sobreEpsAll}>
+            {item.overview ? item.overview.split(".")[0] + "." : ""}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -168,82 +243,166 @@ export default function Info() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={epsode}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderEps}
-        ListEmptyComponent={<Text>Nenhuma temporada encontrada.</Text>}
-        ListHeaderComponent={
-          <View>
-            <ImageBackground
-              source={{
-                uri: `https://image.tmdb.org/t/p/w500${dados.poster_path}`,
-              }}
-              style={styles.image}
-              
-            >
-
-<View style={styles.overlay} />
-            </ImageBackground>
-
-            <View style={styles.containerLogo}>
+      <View>
+        <ImageBackground
+          source={{
+            uri: `https://image.tmdb.org/t/p/w500${dados.poster_path}`,
+          }}
+          style={styles.image}
+        >
+          <View style={styles.overlay} />
+        </ImageBackground>
+        <FlatList
+          data={selectedOption === "episodios" && !isPressed ? epsode : []}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderEps}
+          style={{ height: "100%", zIndex: 5, }}
+          ListEmptyComponent={<Text>Nenhum episódio encontrado.</Text>}
+          ListHeaderComponent={
+            <View style={{ paddingTop: 300 }}>
               <Shadow
-                style={{ zIndex: 1 }}
-                offset={[0, 0]}
-                startColor="#010318"
-                distance={40}
-              >
-                <View style={styles.VwLogo}>
-                  {logoUrl !== null ? (
-                    <Image source={{ uri: logoUrl }} style={styles.logo} />
-                  ) : (
-                    <Text style={styles.text}>{dados.name}</Text>
-                  )}
-                </View>
-              </Shadow>
-            </View>
-
-            <View style={styles.info}>
-              <Text style={styles.textTemps}>
-                {dados.number_of_seasons} temporadas {ano}
-              </Text>
-            </View>
-            <View style={styles.ViewOverVW}>
-              <Text style={styles.textOverVW}>{dados.overview ? dados.overview.split('.')[0] + '.' : ''}</Text>
-            </View>
-            <TouchableOpacity
-              style={{ alignItems: "center" }}
-              onPress={() => setIsPressed(!isPressed)}
+              style={{ zIndex: 16 }}
+              offset={[0, 125]}
+              startColor={`rgb(3, 4, 7)`}
+              distance={180}
+              safeRender
+              paintInside={true}
             >
-              <View style={styles.button}>
-                <Text style={styles.textButton}>{titleTemp}</Text>
-              </View>
-            </TouchableOpacity>
-            <View style={styles.textoEps}>
-              <Text style={styles.textEps}>Episodios</Text>
-            </View>
-          </View>
-        }
-        scrollEnabled={true}
-        nestedScrollEnabled={true}
-      />
+                <View style={{ width: width }}></View>
+              </Shadow>
+              <View style={styles.containerInfos}>
+              
+                  <View style={styles.VwLogo}>
+                    {logoUrl ? (
+                      <Image
+                        source={{ uri: logoUrl }}
+                        style={{
+                          width: fixedWidth,
+                          height: fixedWidth * aspectRatio,
+                          resizeMode: "contain",
+                        }}
+                      />
+                    ) : (
+                      <Text style={styles.text}>{dados.name}</Text>
+                    )}
+                  </View>
+            
 
-      {isPressed && (
-        <View style={styles.containerTemp3}>
-          <FlatList
-            data={seasons}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderSeason}
-            ListEmptyComponent={<Text>Nenhuma temporada encontrada.</Text>}
-            scrollEnabled={true}
-          />
-        </View>
-      )}
+                <View style={styles.info}>
+                  {classificacaoImagem && (
+                    <Image
+                      source={classificacaoImagem}
+                      style={styles.classEtaria}
+                    />
+                  )}
+                  <Text style={styles.textTemps}>
+                    {dados.number_of_seasons} temporadas
+                  </Text>
+                  <Text style={styles.textTemps}>{ano}</Text>
+                </View>
+                <View style={{backgroundColor: "rgb(3, 4, 7)" }}>
+                <View style={styles.ViewOverVW}>
+                  <Text style={styles.textOverVW}>
+                    {dados.overview ? dados.overview.split(".")[0] + "." : ""}
+                  </Text>
+                </View>
+                <View style={styles.opcoesGerais}>
+                  <TouchableOpacity style={styles.alinharOpcoes}>
+                    <FavSvg width={20} height={20} color={"white"} />
+                    <Text style={styles.textOpcoesGerais}>salvar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.alinharOpcoes}>
+                    <TrlSvg width={20} height={20} color={"white"} />
+                    <Text style={styles.textOpcoesGerais}>trailer</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.alinharOpcoes}>
+                    <CompSvg width={20} height={20} color={"white"} />
+                    <Text style={styles.textOpcoesGerais}>compartilhar</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  style={{ alignItems: "center" }}
+                  onPress={() => setIsPressed(!isPressed)}
+                >
+                  <View style={styles.button}>
+                    <Text style={styles.textButton}>{titleTemp}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                {/* Botões de alternância */}
+                <View style={styles.textoEps}>
+                  <TouchableOpacity
+                    onPress={() => setSelectedOption("episodios")}
+                  >
+                    <Text style={styles.textEps}>Episódios</Text>
+                    {selectedOption === "episodios" && (
+                      <View style={styles.highlightBar} />
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setSelectedOption("seriesSemelhantes")}
+                  >
+                    <Text style={styles.textEps}>Séries Semelhantes</Text>
+                    {selectedOption === "seriesSemelhantes" && (
+                      <View style={styles.highlightBar} />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View></View>
+            </View>
+          }
+          scrollEnabled={!isPressed} // Desativa rolagem ao exibir temporadas em tela cheia
+          nestedScrollEnabled={true}
+          ListFooterComponent={
+            // Renderiza conteúdo conforme a opção selecionada
+            <View>
+              {selectedOption === "seriesSemelhantes" && !isPressed && (
+                <ListSemelhantes ids={dados.id} />
+              )}
+            </View>
+          }
+        />
+
+        {/* Tela cheia para as temporadas */}
+        {isPressed && (
+          <View style={styles.fullscreenOverlay}>
+            <FlatList
+              data={seasons} // Lista das temporadas
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={renderSeason}
+              ListEmptyComponent={<Text>Nenhuma temporada encontrada.</Text>}
+            />
+          </View>
+        )}
+      </View>
+      <Menu/>
     </SafeAreaView>
   );
-}
-
+};
+export default React.memo(Info);
 const styles = StyleSheet.create({
+  containerInfos: {
+    width: width,
+    justifyContent: "flex-start",
+  },
+  classEtaria: {
+    width: 20,
+    height: 20,
+    resizeMode: "contain",
+  },
+  fullscreenOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 80,
+    zIndex:80
+  },
+
   container: {
     flex: 1,
     backgroundColor: "#010318",
@@ -252,7 +411,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   containerTemp3: {
-    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -281,22 +439,19 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   logo: {
-    width: "100%",
-    height: 100,
+    width: fixedWidth,
+    height: fixedWidth * aspectRatio,
     resizeMode: "contain",
+  
   },
-  containerLogo: {
-    flex: 1,
-    position: "relative",
-    top: 0,
-    width: width,
-    alignItems: "center",
-  },
+
   VwLogo: {
     width: width,
-    height: 0,
+    height: fixedWidth * aspectRatio,
+    marginBottom: 0,
+    marginLeft: 5,
     backgroundColor: "transparent",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "flex-start",
   },
   text: {
@@ -308,35 +463,45 @@ const styles = StyleSheet.create({
   },
   image: {
     width: width,
-    height: 350,
+    height: 450,
+    position: "absolute",
     resizeMode: "cover",
+    paddingTop: 300,
+  
+    zIndex: -1,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject, // Preenche toda a área da imagem
-    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Camada de cor preta com 30% de opacidade
+    ...StyleSheet.absoluteFillObject, 
+    backgroundColor: "rgba(0, 0, 0, 0.3)", 
   },
   info: {
-    marginTop: 50,
+    marginTop: 20,
     width: width * 1,
-    alignItems: "flex-start",
-    marginLeft: 10,
+    alignItems: "center",
+    marginLeft: 20,
+    flexDirection: "row",
+    gap: 10,
   },
   textTemps: {
     fontSize: 15,
     color: "#ffffff",
   },
   ViewOverVW: {
-    width: width * 0.98,
     marginTop: 5,
     marginBottom: 10,
-    marginHorizontal: 5,
+    marginHorizontal: 20,
+    width: width * 0.92,
   },
   textOverVW: {
     color: "#e4e4e4",
     fontSize: 15,
+   
+    
   },
   textoEps: {
     width: width,
+    flexDirection: "row",
+    justifyContent: "space-around",
     paddingHorizontal: 10,
   },
   textEps: {
@@ -352,6 +517,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     gap: 5,
+    backgroundColor: "rgb(3, 4, 7)"
   },
   imageCapaEps: {
     width: 130,
@@ -388,17 +554,43 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   containerEpsAll: {
-   
     width: width * 0.98,
     padding: 10,
     justifyContent: "flex-start",
     alignItems: "flex-start",
     marginBottom: 10,
     borderRadius: 8,
+    backgroundColor: "rgb(3, 4, 7)"
   },
   epsVw: {
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgb(3, 4, 7)"
+  },
+  highlightBar: {
+    marginTop: 5,
+    height: 3,
+    width: "100%",
+    backgroundColor: "#007AFF", // Cor da barra de destaque
+  },
+  opcoesGerais: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 20,
+    zIndex: 0,
+  },
+  textOpcoesGerais: {
+    color: "white",
+    fontSize: 12,
+    marginTop: 8,
+    zIndex: 0,
+  },
+  alinharOpcoes: {
+    width: 80,
+
+    alignItems: "center",
   },
 });

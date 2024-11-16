@@ -11,7 +11,7 @@ import { useRouter } from "expo-router";
 import TMDBImage from "./TMDBImage";
 import { AppContext } from "./Apimages";
 import DestaqueImage from "./DestaqueImage";
-const { width } = Dimensions.get("window");
+
 
 export default function ListConteudo() {
   const { movies, movieAcaoAventura, movieTerror, filmesAlta } = useContext(AppContext);

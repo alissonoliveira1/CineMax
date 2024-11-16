@@ -41,7 +41,8 @@ export default function ImageDestaque() {
           >
             <ImageBackground
               key={movie.id}
-            
+            resizeMode="cover"
+          
               style={styles.image2}
               onLoadEnd={() => setLoading(false)}
               onError={() => {
@@ -89,7 +90,7 @@ export default function ImageDestaque() {
                               marginBottom: 5,
                             }}
                           >
-                            {" "}
+                        
                             {getGenreNames(movie.genre_ids.slice(0, 3))}
                           </Text>
                         </View>
@@ -135,13 +136,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     justifyContent: "flex-end",
     width: width * 0.9,
-    height: 350,
+    height: 400,
     borderRadius: 10,
     borderStyle: "solid",
     borderColor: "rgb(197, 197, 197)",
     borderWidth: 1,
     zIndex: 1,
-    resizeMode: "cover",
     elevation: 10,
   },
   containerButtonPrincipal: {

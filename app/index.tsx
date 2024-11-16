@@ -4,6 +4,7 @@ import Header from "@/components/header";
 import ImageDestaque from "@/components/ImageDestaque";
 import ListConteudo from "@/components/ListConteudo";
 import AplashInicial from "@/components/SplashInicial";
+import Menu from "@/components/menu";
 import {
   Text,
   View,
@@ -16,7 +17,7 @@ import {
   const Index = () => {
   const [loading, setLoading] = useState(true);
   const scrollY = new Animated.Value(0);
-
+  
   const scrollRoda = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
     { useNativeDriver: false }
@@ -30,8 +31,6 @@ import {
 
     loadData();
   }, []);
-
-
 
 
 
@@ -62,7 +61,9 @@ import {
         <ImageDestaque />
 
         <ListConteudo />
+        
       </ScrollView>
+      <Menu/>
     </SafeAreaView>
   );
 }

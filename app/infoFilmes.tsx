@@ -1,7 +1,7 @@
 import { useGlobalSearchParams } from "expo-router";
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import FavSvg from "../assets/images/plus-lg.svg";
+import FavSvg from "../assets/images/star-fill.svg";
 import TrlSvg from "../assets/images/film.svg";
 import CompSvg from "../assets/images/share-fill.svg";
 import {
@@ -13,11 +13,9 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  TouchableWithoutFeedback,
-  ScrollView,
   FlatList,
 } from "react-native";
-
+import ListSemelhantes from "@/components/ListSemelhantes";
 import { Shadow } from "react-native-shadow-2";
 import api from "./services";
 
@@ -49,12 +47,13 @@ const { width } = Dimensions.get("window");
 const fixedWidth = Dimensions.get("window").width * 0.7;
 const aspectRatio = 1 / 3;
 
-function InfoFilmes() {
+function InfoFilmes() {  
   const params = useGlobalSearchParams();
+  const { id } = params;
+  const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [ano, setAno] = useState<number | null>(null);
-
   const [classificacaoImagem, setClassificacaoImagem] = useState<any>(null);
   const [dados, setDados] = useState<MovieData>({
     title: "",
@@ -70,9 +69,7 @@ function InfoFilmes() {
     logo_path: undefined,
   });
 
-  const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
-  const { id } = params;
-
+ 
   const fetchData = useCallback(async () => {
     try {
       const [dadosResponse, logoResponse] = await Promise.all([
@@ -269,6 +266,10 @@ function InfoFilmes() {
                     {dados.overview ? dados.overview.split(".")[0] + "." : ""}
                   </Text>
                 </View>
+                <View>
+                  <Text style={styles.textSemelhantes}>Filmes Semelhantes</Text>
+                  <ListSemelhantes id={dados.id} />
+                </View>
               </View>
             </View>
           </View>
@@ -320,10 +321,11 @@ const styles = StyleSheet.create({
     color: "#ffffff",
   },
   ViewOverVW: {
-    width: width * 0.94,
+    width: width * 0.90,
     marginTop: 0,
     marginLeft: 20,
-    marginHorizontal: 5,
+    marginRight:20,
+    
     zIndex: 0,
   },
   textOverVW: {
@@ -396,7 +398,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
     marginTop: 10,
-    marginBottom: 4,
+    marginBottom: 20,
     zIndex: 0,
   },
   textOpcoesGerais: {
@@ -409,6 +411,13 @@ const styles = StyleSheet.create({
     width: 80,
 
     alignItems: "center",
+  },
+  textSemelhantes:{
+    color: "white",
+    fontSize: 20,
+    marginTop: 10,
+    marginLeft: 20,
+    marginBottom: 10,
   },
 });
 export default InfoFilmes;

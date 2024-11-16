@@ -35,6 +35,7 @@ export default function RootLayout() {
       />
       <Stack.Screen
         name="info"
+        
         options={{
           headerTitle: () => <Logo />,
           headerShown: true,
@@ -42,6 +43,7 @@ export default function RootLayout() {
           headerTintColor: "white",
           headerStyle: stileHeader,
           headerTransparent: true,
+          
         }}
       />
       <Stack.Screen
@@ -62,8 +64,12 @@ export default function RootLayout() {
           <Stack.Screen
         name="infoFilmes"
         options={{
-          statusBarColor:'rgb(5, 7, 32)',
-          headerShown: false,
+          headerTitle: () => <Logo />,
+          headerShown: true,
+          statusBarTranslucent: true,
+          headerTintColor: "white",
+          headerStyle: stileHeader,
+          headerTransparent: true,
         }}
       />
     </Stack>
