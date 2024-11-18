@@ -21,7 +21,7 @@ const Menu = () => {
         <Home width={23} height={23} color={barra === 'home' ? 'white': '#a7a7a7' } />
         <Text style={styles.optText}>Home</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => setBarra('favoritos')}  style={styles.optMenu}>
+      <TouchableOpacity onPressIn={()=> router.push('/favoritos')} onPress={() => setBarra('favoritos')}  style={styles.optMenu}>
         <Favoritos color={barra === 'favoritos' ? 'white': '#a7a7a7' } width={23} height={23}  />
         <Text style={styles.optText}>Favoritos</Text>
       </TouchableOpacity>

@@ -1,10 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { memo } from "react";
-import Header from "@/components/header";
-import ImageDestaque from "@/components/ImageDestaque";
-import ListConteudo from "@/components/ListConteudo";
-import AplashInicial from "@/components/SplashInicial";
-import Menu from "@/components/menu";
 import {
   Text,
   View,
@@ -12,12 +7,21 @@ import {
   SafeAreaView,
   StyleSheet,
   Animated,
+  TouchableOpacity,
 } from "react-native";
 
-  const Index = () => {
+import Menu from "@/components/menu";
+import Header from "@/components/header";
+import CompHome from "@/components/CompHome";
+import CompSeries from "@/components/CompSeries";
+import CompFilmes from "@/components/CompFilmes";
+import CompSMFamilia from "@/components/CompSMFamilia";
+import AplashInicial from "@/components/SplashInicial";
+
+const Index = () => {
   const [loading, setLoading] = useState(true);
-  const scrollY = new Animated.Value(0);
-  
+  const [opcao, setOpcao] = useState("inicio");
+  const scrollY = useRef(new Animated.Value(0)).current;
   const scrollRoda = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
     { useNativeDriver: false }
@@ -28,12 +32,30 @@ import {
       await new Promise((resolve) => setTimeout(resolve, 3000));
       setLoading(false);
     };
-
     loadData();
   }, []);
 
-
-
+  const options = [
+    { label: "Inicio", value: "inicio" },
+    { label: "Séries", value: "Séries" },
+    { label: "Filmes", value: "Filmes" },
+    { label: "Crianças & Família", value: "Familia" },
+  ];
+  const renderContent = () => {
+    switch (opcao) {
+      case "inicio":
+        return <CompHome />;
+      case "Filmes":
+        return <CompFilmes />;
+      case "Séries":
+        return <CompSeries />;
+      case "Familia":
+        return <CompSMFamilia />;
+      default:
+        return null;
+    }
+  };
+  console.log(opcao);
   if (loading)
     return (
       <View style={styles.loadingContainer}>
@@ -45,35 +67,36 @@ import {
       <Header scrollY={scrollY} />
       <ScrollView onScroll={scrollRoda}>
         <View style={styles.opcoesSerieFilme}>
-          <View style={styles.viewFilmesSeries}>
-            <Text style={styles.textoFilmesSeries}>Inicio</Text>
-          </View>
-          <View style={styles.viewFilmesSeries}>
-            <Text style={styles.textoFilmesSeries}>Séries</Text>
-          </View>
-          <View style={styles.viewFilmesSeries}>
-            <Text style={styles.textoFilmesSeries}>Filmes</Text>
-          </View>
-          <View style={styles.viewFilmesSeries}>
-            <Text style={styles.textoFilmesSeries}>Crianças & Familia</Text>
-          </View>
+          {options.map((option) => (
+            <TouchableOpacity
+              key={option.value}
+              onPress={() => setOpcao(option.value)}
+              style={styles.viewFilmesSeries}
+            >
+              <Text style={styles.textoFilmesSeries}>{option.label}</Text>
+              {opcao === option.value && <View style={styles.highlightBar} />}
+            </TouchableOpacity>
+          ))}
         </View>
-        <ImageDestaque />
-
-        <ListConteudo />
-        
+        {renderContent()}
       </ScrollView>
-      <Menu/>
+      <Menu />
     </SafeAreaView>
   );
-}
+};
 export default memo(Index);
 const styles = StyleSheet.create({
+  highlightBar: {
+    marginTop: 5,
+    height: 3,
+    width: "100%",
+    backgroundColor: "#007AFF",
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgb(5, 7, 32)", 
+    backgroundColor: "rgb(5, 7, 32)",
   },
 
   container2: {
@@ -93,7 +116,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   viewFilmesSeries: {
-    borderBottomWidth: 1,
     borderColor: "#ffffff",
     paddingBottom: 5,
   },

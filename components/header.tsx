@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Shadow } from "react-native-shadow-2";
+
  import { 
   View,
     StyleSheet,
