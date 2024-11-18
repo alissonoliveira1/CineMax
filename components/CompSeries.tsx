@@ -7,10 +7,10 @@ import ListDestaque from "@/components/ListDestaque";
 const CompSeries = () => {
   return (
     <View>
-        <ImageDestaque type={'movie'}  />
+        <ImageDestaque type={'tv'}  />
           <View style={styles.containerCapa}>
             <Text style={styles.text}>Destaque da semana</Text>
-            <CategoryList genreId={16} type="movie" /></View>
+            <CategoryList genreId={16} type="tv" /></View>
             <View style={styles.containerCapa}>
               
             <Text style={styles.text}>Destaque da semana</Text>

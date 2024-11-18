@@ -7,18 +7,27 @@ import ListDestaque from "@/components/ListDestaque";
 const CompFilmes = () => {
   return (
     <View>
-        <ImageDestaque type={'movie'}  />
-          <View style={styles.containerCapa}>
-            <Text style={styles.text}>Destaque da semana</Text>
-            <CategoryList genreId={16} type="movie" /></View>
-            <View style={styles.containerCapa}>
-              
-            <Text style={styles.text}>Destaque da semana</Text>
-            <ListDestaque type="movie" /></View>
-            <View style={styles.containerCapa}>
-              
-            <Text style={styles.text}>Destaque da semana</Text>
-            <CategoryList genreId={10759} type="tv" /></View>
+      <ImageDestaque type={"movie"} />
+      <View style={styles.containerCapa}>
+        <Text style={styles.text}>Animação</Text>
+        <CategoryList genreId={16} type="movie" />
+      </View>
+      <View style={styles.containerCapa}>
+        <Text style={styles.text}>Destaque da semana</Text>
+        <ListDestaque type="movie" />
+      </View>
+      <View style={styles.containerCapa}>
+        <Text style={styles.text}>Comédia</Text>
+        <CategoryList genreId={35} type="movie" />
+      </View>
+      <View style={styles.containerCapa}>
+        <Text style={styles.text}>Aventura</Text>
+        <CategoryList genreId={12} type="movie" />
+      </View>
+      <View style={styles.containerCapa}>
+        <Text style={styles.text}>terror</Text>
+        <CategoryList genreId={27} type="movie" />
+      </View>
     </View>
   );
 };

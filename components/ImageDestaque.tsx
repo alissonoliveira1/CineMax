@@ -7,43 +7,54 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import axios from "axios";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Shadow } from "react-native-shadow-2";
+import axios from "axios";
 import api from "../app/services";
 
 const { width } = Dimensions.get("window");
 const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
 const currentDate = new Date().toISOString().split("T")[0];
 
-// Definir os tipos para movie e tv
 type MediaType = "movie" | "tv";
 
-// Função para obter o logo baseado nas preferências de idioma
-const getLogoByPriority = (logos: any[], idiomasPrioridade: string[]) => {
+interface Logo {
+  file_path: string;
+  iso_639_1: string;
+}
+
+const getLogoByPriority = (logos: Logo[], idiomasPrioridade: string[]): string | null => {
   return logos.find((logo) => idiomasPrioridade.includes(logo.iso_639_1))?.file_path || null;
 };
 
-// Função para buscar imagens de filmes
-const fetchMovieImages = async (movieId: string, type: MediaType) => {
+interface MovieImage {
+  file_path: string;
+  iso_639_1: string;
+}
+
+const fetchMovieImages = async (movieId: number, type: MediaType): Promise<MovieImage[]> => {
   try {
     const endpoint = type === "movie" ? `movie/${movieId}/images` : `tv/${movieId}/images`;
-    const { data } = await api.get(endpoint, {
-      params: { api_key: API_KEY },
-    });
+    const { data } = await api.get(endpoint, { params: { api_key: API_KEY } });
     return data.logos;
-  } catch (error) {
-    console.error(`Erro ao buscar imagens para o ${type} com ID: ${movieId}`, error);
+  } catch {
     return [];
   }
 };
 
-// Função para buscar filmes ou séries
-const fetchMedia = async (type: MediaType, genreId: number) => {
+interface MediaResult {
+  id: number;
+  genre_ids: number[];
+  backdrop_path: string;
+  name?: string;
+  title?: string;
+}
+
+const fetchMedia = async (type: MediaType, genreId: number): Promise<MediaResult[]> => {
   try {
-    const response = await api.get(`discover/${type}`, {
+    const { data } = await api.get(`discover/${type}`, {
       params: {
         api_key: API_KEY,
         language: "pt-BR",
@@ -52,130 +63,124 @@ const fetchMedia = async (type: MediaType, genreId: number) => {
         first_air_date_lte: currentDate,
       },
     });
-    return response.data.results.slice(0, 10); // Pegando apenas os 10 primeiros
-  } catch (error) {
-    console.error(`Erro ao buscar ${type === "movie" ? "filmes" : "séries"} do gênero ${genreId}`, error);
+    return data.results.slice(0, 10);
+  } catch {
     return [];
   }
 };
 
-const ImageDestaque: React.FC<{ type: MediaType }> = ({ type }) => {
+interface ImageDestaqueProps {
+  type: MediaType;
+}
+
+const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [destaque, setDestaque] = useState<any>(null);
+  const [destaque, setDestaque] = useState<MediaResult & { logoPath: string } | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [coresBackground, setCoresBackground] = useState<string[]>(["9, 14, 82"]);
-  const [generos, setGeneros] = useState<any[]>([]);
+  const [coresBackground, setCoresBackground] = useState(["9, 14, 82"]);
+  const [generos, setGeneros] = useState<{ id: number; name: string }[]>([]);
 
-  useEffect(() => {
-    const getGeneros = async () => {
-      try {
-        const response = await api.get("genre/tv/list", {
-          params: { api_key: API_KEY, language: "pt-BR" },
-        });
-        setGeneros(response.data.genres);
-      } catch (error) {
-        console.error("Erro ao buscar os gêneros:", error);
-      }
-    };
-
-    getGeneros();
+  const loadGeneros = useCallback(async () => {
+    try {
+      const { data } = await api.get("genre/tv/list", {
+        params: { api_key: API_KEY, language: "pt-BR" },
+      });
+      setGeneros(data.genres);
+    } catch (error) {
+      console.error("Erro ao carregar gêneros:", error);
+    }
   }, []);
 
-  useEffect(() => {
-    const getInitialData = async () => {
-      try {
-        const idiomasPrioridade = ["pt-BR", "pt", "en-US", "en"];
-        const filmesComLogoEGênero = await getMoviesWithLogos(generos, type);
+  const getMoviesWithLogos = useCallback(async () => {
+    const moviesWithLogos: Array<MediaResult & { logoPath: string }> = [];
+    const fetchMovies = generos.map(async (genero) => {
+      const movies = await fetchMedia(type, genero.id);
+      const filteredMovies = await Promise.all(
+        movies.map(async (movie) => {
+          if (movie.genre_ids?.length > 0 && movie.backdrop_path) {
+            const logos = await fetchMovieImages(movie.id, type);
+            const logoPath = getLogoByPriority(logos, ["pt-BR", "pt", "en-US", "en"]);
+            if (logoPath) {
+              return { ...movie, logoPath };
+            }
+          }
+          return null;
+        })
+      );
+      moviesWithLogos.push(...(filteredMovies.filter((movie): movie is MediaResult & { logoPath: string } => movie !== null)));
+    });
 
+    await Promise.all(fetchMovies);
+    return moviesWithLogos;
+  }, [generos, type]);
+
+  useEffect(() => {
+    loadGeneros();
+  }, [loadGeneros]);
+
+  useEffect(() => {
+    const loadDestaque = async () => {
+      if (generos.length === 0) return;
+
+      try {
+        const filmesComLogoEGênero = await getMoviesWithLogos();
         if (filmesComLogoEGênero.length > 0) {
-          // Escolher aleatoriamente um dos 10 primeiros filmes
           const randomIndex = Math.floor(Math.random() * filmesComLogoEGênero.length);
           const destaqueSelecionado = filmesComLogoEGênero[randomIndex];
           setDestaque(destaqueSelecionado);
-          setLogoUrl(`https://image.tmdb.org/t/p/original${destaqueSelecionado.logoPath}`);
+          setLogoUrl(`https://image.tmdb.org/t/p/w500${destaqueSelecionado.logoPath}`);
 
-          // Cor do fundo baseada no backdrop
-          const imageUrl = `https://image.tmdb.org/t/p/original${destaqueSelecionado.backdrop_path}`;
-          const colorResponse = await axios.get(`https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`);
-          setCoresBackground(colorResponse.data.dominantColor);
+          const imageUrl = `https://image.tmdb.org/t/p/w500${destaqueSelecionado.backdrop_path}`;
+          const { data } = await axios.get(`https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`);
+          setCoresBackground(data.dominantColor);
         }
       } catch (error) {
-        console.error("Erro ao buscar dados de filmes:", error);
+        console.error("Erro ao buscar destaque:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    getInitialData();
-  }, [generos, type]);
+    loadDestaque();
+  }, [getMoviesWithLogos]);
 
-  const getMoviesWithLogos = async (generos: any[], type: MediaType) => {
-    const moviesWithLogos = [];
-  
-    for (const genero of generos) {
-      const movies = await fetchMedia(type, genero.id);
-      for (const movie of movies) {
-        if (movie.genre_ids?.length > 0 && movie.backdrop_path) {
-          const logos = await fetchMovieImages(movie.id, type); // Passa o tipo para a função
-          const logoPath = getLogoByPriority(logos, ["pt-BR", "pt", "en-US", "en"]);
-          if (logoPath) {
-            moviesWithLogos.push({ ...movie, logoPath });
-          }
-        }
-      }
-    }
-  
-    return moviesWithLogos;
-  };
-
-  const getGenreNames = (genreIds: number[]) => {
-    return genreIds
-      .map((id) => generos.find((genre) => genre.id === id)?.name)
-      .filter((name) => name)
-      .join(" ° ");
-  };
+  const getGenreNames = useCallback(
+    (genreIds: number[]): string =>
+      genreIds
+        .map((id) => generos.find((genre) => genre.id === id)?.name)
+        .filter(Boolean)
+        .join(" ° "),
+    [generos]
+  );
 
   return (
     <View style={styles.container}>
+      {loading && (
+        <View style={styles.placeholder}>
+          <ActivityIndicator size="large" color="#5c5c5c" />
+        </View>
+      )}
       {destaque && (
         <View style={styles.imageContainer2}>
-          <Shadow
-            offset={[0, 0]}
-            startColor={`rgb(${coresBackground})`}
-            distance={350}
-          >
+          <Shadow offset={[0, 0]} startColor={`rgb(${coresBackground})`} distance={350}>
             <ImageBackground
               resizeMode="cover"
               style={styles.image2}
-              onLoadEnd={() => setLoading(false)}
-              onError={() => setError(true)}
               source={{
                 uri: `https://image.tmdb.org/t/p/original/${destaque.backdrop_path}`,
-                cache: "reload",
+                cache: "force-cache",
               }}
             >
-              {(loading || error) && (
-                <View style={styles.placeholder}>
-                  <ActivityIndicator size="large" color="#5c5c5c" />
-                </View>
-              )}
               <View style={{ width: width * 0.9 }}>
-                <Shadow
-                  offset={[0, 170]}
-                  startColor={`rgb(${coresBackground}.534)`}
-                  distance={140}
-                  paintInside
-                >
+                <Shadow offset={[0, 170]} startColor={`rgb(${coresBackground}.534)`} distance={140} paintInside>
                   <View style={styles.containerButtonPrincipal}>
                     <View style={styles.vwImg}>
-                      {logoUrl !== null ? (
+                      {logoUrl ? (
                         <View style={{ alignItems: "center" }}>
-                          <Image
-                            source={{ uri: logoUrl }}
-                            cachePolicy={"memory"}
-                            style={styles.imgLogo}
-                          />
+                          <Image source={{ uri: logoUrl }} cachePolicy="memory" style={styles.imgLogo} />
                           <Text style={{ color: "#ececec", fontSize: 12.5, fontWeight: "500", marginBottom: 5 }}>
                             {getGenreNames(destaque.genre_ids.slice(0, 3))}
                           </Text>
@@ -203,9 +208,10 @@ const ImageDestaque: React.FC<{ type: MediaType }> = ({ type }) => {
       )}
     </View>
   );
-};
+});
 
 export default ImageDestaque;
+
 
 const styles = StyleSheet.create({
   container: {
