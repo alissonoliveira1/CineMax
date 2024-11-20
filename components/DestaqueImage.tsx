@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { View, Image, ActivityIndicator, StyleSheet } from "react-native";
-
+import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 interface TMDBImageProps {
   uri: string;
 }
@@ -17,7 +17,10 @@ const DestaqueImage: React.FC<TMDBImageProps> = ({ uri }) => {
       )}
       <Image
         style={styles.image}
-        source={{ uri: uri, cache: "reload" }}
+        source={{ uri: uri }}
+        cachePolicy={'memory'}
+        priority={'high'}
+        contentFit="cover"
         onLoad={() => setLoading(false)}
       />
     </View>
@@ -35,7 +38,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 5,
-    resizeMode: "cover",
   },
   placeholder: {
     ...StyleSheet.absoluteFillObject,

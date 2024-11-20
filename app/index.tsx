@@ -21,12 +21,29 @@ import AplashInicial from "@/components/SplashInicial";
 const Index = () => {
   const [loading, setLoading] = useState(true);
   const [opcao, setOpcao] = useState("inicio");
+ 
   const scrollY = useRef(new Animated.Value(0)).current;
+  const lastScrollY = useRef(0); // Armazena o último valor do scroll
+  const [menuVisible, setMenuVisible] = useState(true);
+
   const scrollRoda = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: false }
-  );
+    {
+      useNativeDriver: false,
+      listener: (event: any) => {
+        const currentScrollY = event.nativeEvent.contentOffset.y;
 
+    
+        if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+          setMenuVisible(false); 
+        } else if (currentScrollY < lastScrollY.current) {
+          setMenuVisible(true); 
+        }
+
+        lastScrollY.current = currentScrollY; 
+      },
+    }
+  );
   useEffect(() => {
     const loadData = async () => {
       await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -80,7 +97,7 @@ const Index = () => {
         </View>
         {renderContent()}
       </ScrollView>
-      <Menu />
+      <Menu isVisible={menuVisible}/>
     </SafeAreaView>
   );
 };

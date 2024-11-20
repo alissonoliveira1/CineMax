@@ -6,7 +6,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useState, useEffect, useCallback } from "react";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -25,8 +27,14 @@ interface Logo {
   iso_639_1: string;
 }
 
-const getLogoByPriority = (logos: Logo[], idiomasPrioridade: string[]): string | null => {
-  return logos.find((logo) => idiomasPrioridade.includes(logo.iso_639_1))?.file_path || null;
+const getLogoByPriority = (
+  logos: Logo[],
+  idiomasPrioridade: string[]
+): string | null => {
+  return (
+    logos.find((logo) => idiomasPrioridade.includes(logo.iso_639_1))
+      ?.file_path || null
+  );
 };
 
 interface MovieImage {
@@ -34,9 +42,13 @@ interface MovieImage {
   iso_639_1: string;
 }
 
-const fetchMovieImages = async (movieId: number, type: MediaType): Promise<MovieImage[]> => {
+const fetchMovieImages = async (
+  movieId: number,
+  type: MediaType
+): Promise<MovieImage[]> => {
   try {
-    const endpoint = type === "movie" ? `movie/${movieId}/images` : `tv/${movieId}/images`;
+    const endpoint =
+      type === "movie" ? `movie/${movieId}/images` : `tv/${movieId}/images`;
     const { data } = await api.get(endpoint, { params: { api_key: API_KEY } });
     return data.logos;
   } catch {
@@ -52,7 +64,10 @@ interface MediaResult {
   title?: string;
 }
 
-const fetchMedia = async (type: MediaType, genreId: number): Promise<MediaResult[]> => {
+const fetchMedia = async (
+  type: MediaType,
+  genreId: number
+): Promise<MediaResult[]> => {
   try {
     const { data } = await api.get(`discover/${type}`, {
       params: {
@@ -75,14 +90,28 @@ interface ImageDestaqueProps {
 
 const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
   const router = useRouter();
-
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [destaque, setDestaque] = useState<MediaResult & { logoPath: string } | null>(null);
+  const [destaque, setDestaque] = useState<
+    (MediaResult & { logoPath: string }) | null
+  >(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [coresBackground, setCoresBackground] = useState(["9, 14, 82"]);
   const [generos, setGeneros] = useState<{ id: number; name: string }[]>([]);
+  const shimmerAnim = new Animated.Value(0);
 
+  // Inicia a animação
+  Animated.loop(
+    Animated.timing(shimmerAnim, {
+      toValue: 1,
+      duration: 1500,
+      useNativeDriver: true,
+    })
+  ).start();
+
+  const translateX = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-300, Dimensions.get("window").width],
+  });
   const loadGeneros = useCallback(async () => {
     try {
       const { data } = await api.get("genre/tv/list", {
@@ -102,7 +131,12 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
         movies.map(async (movie) => {
           if (movie.genre_ids?.length > 0 && movie.backdrop_path) {
             const logos = await fetchMovieImages(movie.id, type);
-            const logoPath = getLogoByPriority(logos, ["pt-BR", "pt", "en-US", "en"]);
+            const logoPath = getLogoByPriority(logos, [
+              "pt-BR",
+              "pt",
+              "en-US",
+              "en",
+            ]);
             if (logoPath) {
               return { ...movie, logoPath };
             }
@@ -110,7 +144,11 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
           return null;
         })
       );
-      moviesWithLogos.push(...(filteredMovies.filter((movie): movie is MediaResult & { logoPath: string } => movie !== null)));
+      moviesWithLogos.push(
+        ...filteredMovies.filter(
+          (movie): movie is MediaResult & { logoPath: string } => movie !== null
+        )
+      );
     });
 
     await Promise.all(fetchMovies);
@@ -128,13 +166,19 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
       try {
         const filmesComLogoEGênero = await getMoviesWithLogos();
         if (filmesComLogoEGênero.length > 0) {
-          const randomIndex = Math.floor(Math.random() * filmesComLogoEGênero.length);
+          const randomIndex = Math.floor(
+            Math.random() * filmesComLogoEGênero.length
+          );
           const destaqueSelecionado = filmesComLogoEGênero[randomIndex];
           setDestaque(destaqueSelecionado);
-          setLogoUrl(`https://image.tmdb.org/t/p/w500${destaqueSelecionado.logoPath}`);
+          setLogoUrl(
+            `https://image.tmdb.org/t/p/w500${destaqueSelecionado.logoPath}`
+          );
 
           const imageUrl = `https://image.tmdb.org/t/p/w500${destaqueSelecionado.backdrop_path}`;
-          const { data } = await axios.get(`https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`);
+          const { data } = await axios.get(
+            `https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`
+          );
           setCoresBackground(data.dominantColor);
         }
       } catch (error) {
@@ -158,14 +202,38 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
 
   return (
     <View style={styles.container}>
-      {loading && (
-        <View style={styles.placeholder}>
-          <ActivityIndicator size="large" color="#5c5c5c" />
+      {!destaque && (
+        <View style={styles.shimmerContainer}>
+          <View style={styles.image2}>
+            <Animated.View
+              style={[
+                styles.shimmerGradient,
+                {
+                  transform: [{ translateX }],
+                },
+              ]}
+            >
+              <Shadow
+                offset={[0, 0]}
+                startColor={`#2e2e2e`}
+                distance={100}
+              >
+                <LinearGradient
+                  colors={["#2e2e2e", "#2e2e2e", "#2e2e2e"]}
+                  style={styles.gradient}
+                />
+              </Shadow>
+            </Animated.View>
+          </View>
         </View>
       )}
       {destaque && (
         <View style={styles.imageContainer2}>
-          <Shadow offset={[0, 0]} startColor={`rgb(${coresBackground})`} distance={350}>
+          <Shadow
+            offset={[0, 0]}
+            startColor={`rgb(${coresBackground})`}
+            distance={350}
+          >
             <ImageBackground
               resizeMode="cover"
               style={styles.image2}
@@ -175,13 +243,29 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
               }}
             >
               <View style={{ width: width * 0.9 }}>
-                <Shadow offset={[0, 170]} startColor={`rgb(${coresBackground}.534)`} distance={140} paintInside>
+                <Shadow
+                  offset={[0, 170]}
+                  startColor={`rgb(${coresBackground}.534)`}
+                  distance={140}
+                  paintInside
+                >
                   <View style={styles.containerButtonPrincipal}>
                     <View style={styles.vwImg}>
                       {logoUrl ? (
                         <View style={{ alignItems: "center" }}>
-                          <Image source={{ uri: logoUrl }} cachePolicy="memory" style={styles.imgLogo} />
-                          <Text style={{ color: "#ececec", fontSize: 12.5, fontWeight: "500", marginBottom: 5 }}>
+                          <Image
+                            source={{ uri: logoUrl }}
+                            cachePolicy="memory"
+                            style={styles.imgLogo}
+                          />
+                          <Text
+                            style={{
+                              color: "#ececec",
+                              fontSize: 12.5,
+                              fontWeight: "500",
+                              marginBottom: 5,
+                            }}
+                          >
                             {getGenreNames(destaque.genre_ids.slice(0, 3))}
                           </Text>
                         </View>
@@ -193,7 +277,9 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
                       <View style={styles.buttoninfo}>
                         <Text style={styles.buttontext2}>Assistir</Text>
                       </View>
-                      <TouchableOpacity onPress={() => router.push(`/info?id=${destaque.id}`)}>
+                      <TouchableOpacity
+                        onPress={() => router.push(`/info?id=${destaque.id}`)}
+                      >
                         <View style={styles.buttoninfo2}>
                           <Text style={styles.buttontext}>Informações</Text>
                         </View>
@@ -212,8 +298,22 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
 
 export default ImageDestaque;
 
-
 const styles = StyleSheet.create({
+  shimmerContainer: {
+    top: 0,
+    backgroundColor: "transparent",
+    position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  shimmerGradient: {
+    position: "absolute",
+    width: 100,
+    height: "100%",
+  },
+  gradient: {
+    flex: 1,
+  },
   container: {
     backgroundColor: "transparent",
     marginTop: 70,
@@ -230,8 +330,9 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     width: width * 0.9,
     height: 400,
+    backgroundColor: "#1d1e27",
     borderRadius: 10,
-    borderColor: "rgb(197, 197, 197)",
+    borderColor: "rgb(141, 141, 141)",
     borderWidth: 1,
     zIndex: 1,
     elevation: 10,
