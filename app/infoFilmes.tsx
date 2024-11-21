@@ -18,7 +18,7 @@ import {
 import ListSemelhantes from "@/components/ListSemelhantes";
 import { Shadow } from "react-native-shadow-2";
 import api from "./services";
-
+import { addFav } from "@/components/AddFav";
 type AgeRating =
   | "L"
   | "10"
@@ -58,10 +58,10 @@ function InfoFilmes() {
   const [dados, setDados] = useState<MovieData>({
     title: "",
     release_date: undefined,
-    name: undefined,
-    overview: undefined,
-    poster_path: undefined,
-    backdrop_path: undefined,
+    name: "",
+    overview: "",
+    poster_path: "",
+    backdrop_path: "",
     production_companies: undefined,
     genres: undefined,
     first_air_date: undefined,
@@ -169,7 +169,16 @@ function InfoFilmes() {
       </View>
     );
   }
-
+function handleAddFav(){
+  const movie = {
+    nome: dados.title,
+    sobre: dados.overview,
+    poster: dados.poster_path,
+    backdrop: dados.backdrop_path,
+    id: id
+  };
+  addFav(movie);
+}
   return (
     <View style={styles.container1}>
       <ImageBackground
@@ -247,7 +256,7 @@ function InfoFilmes() {
                   </TouchableOpacity>
                 </View>
                 <View style={styles.opcoesGerais}>
-                  <TouchableOpacity style={styles.alinharOpcoes}>
+                  <TouchableOpacity onPress={handleAddFav} style={styles.alinharOpcoes}>
                     <FavSvg width={20} height={20} color={"white"} />
                     <Text style={styles.textOpcoesGerais}>salvar</Text>
                   </TouchableOpacity>
