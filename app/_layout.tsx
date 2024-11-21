@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { useRouter } from "expo-router";
 import { View, TouchableOpacity } from "react-native";
-import { AppProvider } from '@/components/Apimages'; 
+
 import SearchIcon from "../assets/images/search.svg";
 export default function RootLayout() {
   const router = useRouter();
@@ -27,7 +27,7 @@ export default function RootLayout() {
   };
   return (
 
-    <AppProvider>
+ 
     <Stack>
       <Stack.Screen
         name="index"
@@ -35,6 +35,7 @@ export default function RootLayout() {
       />
       <Stack.Screen
         name="info"
+        
         options={{
           headerTitle: () => <Logo />,
           headerShown: true,
@@ -42,6 +43,7 @@ export default function RootLayout() {
           headerTintColor: "white",
           headerStyle: stileHeader,
           headerTransparent: true,
+          
         }}
       />
       <Stack.Screen
@@ -50,6 +52,18 @@ export default function RootLayout() {
           statusBarHidden: false,
           statusBarTranslucent: true,
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="favoritos"
+        options={{
+          headerTitle: () => <Logo />,
+          headerShown: true,
+          statusBarTranslucent: true,
+          headerTintColor: "white",
+          headerStyle: stileHeader,
+          headerTransparent: true,
+          
         }}
       />
           <Stack.Screen
@@ -62,12 +76,16 @@ export default function RootLayout() {
           <Stack.Screen
         name="infoFilmes"
         options={{
-          statusBarColor:'rgb(5, 7, 32)',
-          headerShown: false,
+          headerTitle: () => <Logo />,
+          headerShown: true,
+          statusBarTranslucent: true,
+          headerTintColor: "white",
+          headerStyle: stileHeader,
+          headerTransparent: true,
         }}
       />
     </Stack>
-    </AppProvider>
+  
   
   );
 }

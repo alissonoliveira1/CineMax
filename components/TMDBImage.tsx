@@ -31,7 +31,6 @@ const TMDBImage: React.FC<TMDBImageProps> = ({ uri }) => {
           source={{ uri }}
           onLoadEnd={() => setLoading(false)}
           onError={() => {
-            
             setError(true);
           }}
           contentFit="cover"

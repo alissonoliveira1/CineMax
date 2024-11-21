@@ -5,57 +5,244 @@ import {
   Dimensions,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  Animated,
 } from "react-native";
-import React from "react";
-import { useContext } from "react";
-import { Image } from 'expo-image';
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useState, useEffect, useCallback } from "react";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Shadow } from "react-native-shadow-2";
-import { AppContext } from "../components/Apimages";
-import { useState } from "react"; 
+import axios from "axios";
+import api from "../app/services";
 
 const { width } = Dimensions.get("window");
+const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
+const currentDate = new Date().toISOString().split("T")[0];
 
-export default function ImageDestaque() {
-  const router = useRouter();
-  const { destaque, coresBackground, logoUrl, genres } = useContext(AppContext);
-  const [loading, setLoading] = useState(true);
-  const getGenreNames = (genreIds: number[]) => {
-    return genreIds
-      .map((id) => genres.find((genre) => genre.id === id)?.name)
-      .filter((name) => name)
-      .join(" ° ");
-  };
-  const handleImageLoad = () => {
-    return(
-      <View style={styles.placeholder}>
-      <ActivityIndicator size="large" color="#5c5c5c" />
-    </View>
-    )
+type MediaType = "movie" | "tv";
+
+interface Logo {
+  file_path: string;
+  iso_639_1: string;
+}
+
+const getLogoByPriority = (
+  logos: Logo[],
+  idiomasPrioridade: string[]
+): string | null => {
+  return (
+    logos.find((logo) => idiomasPrioridade.includes(logo.iso_639_1))
+      ?.file_path || null
+  );
+};
+
+interface MovieImage {
+  file_path: string;
+  iso_639_1: string;
+}
+
+const fetchMovieImages = async (
+  movieId: number,
+  type: MediaType
+): Promise<MovieImage[]> => {
+  try {
+    const endpoint =
+      type === "movie" ? `movie/${movieId}/images` : `tv/${movieId}/images`;
+    const { data } = await api.get(endpoint, { params: { api_key: API_KEY } });
+    return data.logos;
+  } catch {
+    return [];
   }
-   
+};
+
+interface MediaResult {
+  id: number;
+  genre_ids: number[];
+  backdrop_path: string;
+  name?: string;
+  title?: string;
+}
+
+const fetchMedia = async (
+  type: MediaType,
+  genreId: number
+): Promise<MediaResult[]> => {
+  try {
+    const { data } = await api.get(`discover/${type}`, {
+      params: {
+        api_key: API_KEY,
+        language: "pt-BR",
+        with_genres: genreId,
+        page: 1,
+        first_air_date_lte: currentDate,
+      },
+    });
+    return data.results.slice(0, 10);
+  } catch {
+    return [];
+  }
+};
+
+interface ImageDestaqueProps {
+  type: MediaType;
+}
+
+const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [destaque, setDestaque] = useState<
+    (MediaResult & { logoPath: string }) | null
+  >(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [coresBackground, setCoresBackground] = useState(["9, 14, 82"]);
+  const [generos, setGeneros] = useState<{ id: number; name: string }[]>([]);
+  const shimmerAnim = new Animated.Value(0);
+
+  // Inicia a animação
+  Animated.loop(
+    Animated.timing(shimmerAnim, {
+      toValue: 1,
+      duration: 1500,
+      useNativeDriver: true,
+    })
+  ).start();
+
+  const translateX = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-300, Dimensions.get("window").width],
+  });
+  const loadGeneros = useCallback(async () => {
+    try {
+      const { data } = await api.get("genre/tv/list", {
+        params: { api_key: API_KEY, language: "pt-BR" },
+      });
+      setGeneros(data.genres);
+    } catch (error) {
+      console.error("Erro ao carregar gêneros:", error);
+    }
+  }, []);
+
+  const getMoviesWithLogos = useCallback(async () => {
+    const moviesWithLogos: Array<MediaResult & { logoPath: string }> = [];
+    const fetchMovies = generos.map(async (genero) => {
+      const movies = await fetchMedia(type, genero.id);
+      const filteredMovies = await Promise.all(
+        movies.map(async (movie) => {
+          if (movie.genre_ids?.length > 0 && movie.backdrop_path) {
+            const logos = await fetchMovieImages(movie.id, type);
+            const logoPath = getLogoByPriority(logos, [
+              "pt-BR",
+              "pt",
+              "en-US",
+              "en",
+            ]);
+            if (logoPath) {
+              return { ...movie, logoPath };
+            }
+          }
+          return null;
+        })
+      );
+      moviesWithLogos.push(
+        ...filteredMovies.filter(
+          (movie): movie is MediaResult & { logoPath: string } => movie !== null
+        )
+      );
+    });
+
+    await Promise.all(fetchMovies);
+    return moviesWithLogos;
+  }, [generos, type]);
+
+  useEffect(() => {
+    loadGeneros();
+  }, [loadGeneros]);
+
+  useEffect(() => {
+    const loadDestaque = async () => {
+      if (generos.length === 0) return;
+
+      try {
+        const filmesComLogoEGênero = await getMoviesWithLogos();
+        if (filmesComLogoEGênero.length > 0) {
+          const randomIndex = Math.floor(
+            Math.random() * filmesComLogoEGênero.length
+          );
+          const destaqueSelecionado = filmesComLogoEGênero[randomIndex];
+          setDestaque(destaqueSelecionado);
+          setLogoUrl(
+            `https://image.tmdb.org/t/p/w500${destaqueSelecionado.logoPath}`
+          );
+
+          const imageUrl = `https://image.tmdb.org/t/p/w500${destaqueSelecionado.backdrop_path}`;
+          const { data } = await axios.get(
+            `https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`
+          );
+          setCoresBackground(data.dominantColor);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar destaque:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDestaque();
+  }, [getMoviesWithLogos]);
+
+  const getGenreNames = useCallback(
+    (genreIds: number[]): string =>
+      genreIds
+        .map((id) => generos.find((genre) => genre.id === id)?.name)
+        .filter(Boolean)
+        .join(" ° "),
+    [generos]
+  );
+
   return (
     <View style={styles.container}>
-      {destaque.map((movie) => (
-        <View style={styles.imageContainer2} key={movie.id}>
+      {!destaque && (
+        <View style={styles.shimmerContainer}>
+          <View style={styles.image2}>
+            <Animated.View
+              style={[
+                styles.shimmerGradient,
+                {
+                  transform: [{ translateX }],
+                },
+              ]}
+            >
+              <Shadow
+                offset={[0, 0]}
+                startColor={`#2e2e2e`}
+                distance={100}
+              >
+                <LinearGradient
+                  colors={["#2e2e2e", "#2e2e2e", "#2e2e2e"]}
+                  style={styles.gradient}
+                />
+              </Shadow>
+            </Animated.View>
+          </View>
+        </View>
+      )}
+      {destaque && (
+        <View style={styles.imageContainer2}>
           <Shadow
             offset={[0, 0]}
             startColor={`rgb(${coresBackground})`}
             distance={350}
           >
             <ImageBackground
-              key={movie.id}
+              resizeMode="cover"
               style={styles.image2}
-              onLoadEnd={handleImageLoad}
               source={{
-                uri: `https://image.tmdb.org/t/p/original/${movie.backdrop_path}`,
-                cache: "reload",
+                uri: `https://image.tmdb.org/t/p/original/${destaque.backdrop_path}`,
+                cache: "force-cache",
               }}
             >
-              <View
-                style={{ width: width * 0.9, backfaceVisibility: "hidden" }}
-              >
+              <View style={{ width: width * 0.9 }}>
                 <Shadow
                   offset={[0, 170]}
                   startColor={`rgb(${coresBackground}.534)`}
@@ -64,18 +251,12 @@ export default function ImageDestaque() {
                 >
                   <View style={styles.containerButtonPrincipal}>
                     <View style={styles.vwImg}>
-                      {logoUrl !== null ? (
-                        <View
-                          style={{
-                            alignItems: "center",
-                            justifyContent: "space-evenly",
-                          }}
-                        >
+                      {logoUrl ? (
+                        <View style={{ alignItems: "center" }}>
                           <Image
-                            source={{ uri: logoUrl}}
-                            cachePolicy={"memory"}
+                            source={{ uri: logoUrl }}
+                            cachePolicy="memory"
                             style={styles.imgLogo}
-                          
                           />
                           <Text
                             style={{
@@ -85,12 +266,11 @@ export default function ImageDestaque() {
                               marginBottom: 5,
                             }}
                           >
-                            {" "}
-                            {getGenreNames(movie.genre_ids.slice(0, 3))}
+                            {getGenreNames(destaque.genre_ids.slice(0, 3))}
                           </Text>
                         </View>
                       ) : (
-                        <Text style={styles.text}>{movie.name}</Text>
+                        <Text style={styles.text}>{destaque.name}</Text>
                       )}
                     </View>
                     <View style={styles.containerbutton2}>
@@ -98,7 +278,7 @@ export default function ImageDestaque() {
                         <Text style={styles.buttontext2}>Assistir</Text>
                       </View>
                       <TouchableOpacity
-                        onPress={() => router.push(`/info?id=${movie.id}`)}
+                        onPress={() => router.push(`/info?id=${destaque.id}`)}
                       >
                         <View style={styles.buttoninfo2}>
                           <Text style={styles.buttontext}>Informações</Text>
@@ -111,14 +291,32 @@ export default function ImageDestaque() {
             </ImageBackground>
           </Shadow>
         </View>
-      ))}
+      )}
     </View>
   );
-}
+});
+
+export default ImageDestaque;
+
 const styles = StyleSheet.create({
+  shimmerContainer: {
+    top: 0,
+    backgroundColor: "transparent",
+    position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  shimmerGradient: {
+    position: "absolute",
+    width: 100,
+    height: "100%",
+  },
+  gradient: {
+    flex: 1,
+  },
   container: {
     backgroundColor: "transparent",
-    marginTop: 30,
+    marginTop: 70,
   },
   imageContainer2: {
     top: 0,
@@ -131,14 +329,14 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     justifyContent: "flex-end",
     width: width * 0.9,
-    height: 350,
+    height: 400,
+    backgroundColor: "#1d1e27",
     borderRadius: 10,
-    borderStyle: "solid",
-    borderColor: "rgb(197, 197, 197)",
+    borderColor: "rgb(141, 141, 141)",
     borderWidth: 1,
     zIndex: 1,
-    resizeMode: "cover",
     elevation: 10,
+    transform: [{ translateY: -50 }],
   },
   containerButtonPrincipal: {
     justifyContent: "flex-end",
@@ -163,6 +361,9 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     justifyContent: "space-evenly",
     flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+    marginBottom: 10,
   },
   buttoninfo: {
     width: width * 0.39,
@@ -194,21 +395,15 @@ const styles = StyleSheet.create({
     fontSize: 16.5,
     fontWeight: "bold",
   },
-  text: {
-    color: "white",
-    marginTop: 10,
-    marginBottom: 5,
-    marginLeft: 10,
-    fontWeight: "bold",
-    fontSize: 20,
-  },
   placeholder: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#02082c',
-    borderRadius: 5,
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: [{ translateX: -50 }, { translateY: -50 }],
   },
-
+  text: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
 });
-

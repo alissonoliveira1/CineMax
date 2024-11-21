@@ -3,18 +3,26 @@ import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useGlobalSearchParams } from "expo-router";
 import * as ScreenOrientation from 'expo-screen-orientation';
+
 export default function VideoPlayer() {
   const params = useGlobalSearchParams();
   const { imdb_id, temp, ep } = params;
   console.log(imdb_id, temp, ep);
 
+  // Função para bloquear qualquer URL (incluindo a inicial)
+  const handleShouldStartLoadWithRequest = (request: any) => {
+    console.log('Tentando carregar URL:', request.url);
+
+    // Bloqueia todas as URLs, incluindo a URL original
+    return false;
+  };
+
   const changeScreenOrientation = async () => {
     await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
   };
 
-  // Restaurar a orientação padrão ao sair da tela
   const resetScreenOrientation = async () => {
-    await ScreenOrientation.unlockAsync(); // Volta à orientação padrão do app
+    await ScreenOrientation.unlockAsync();
   };
 
   useEffect(() => {
@@ -24,14 +32,16 @@ export default function VideoPlayer() {
       resetScreenOrientation();
     };
   }, []);
+
   return (
     <View style={styles.container}>
       <WebView
-        source={{ uri: `https://superflixapi.dev/serie/${imdb_id}/${temp}/${ep}` }} // URL da página a ser carregada
+        source={{ uri: `https://superflixapi.dev/serie/${imdb_id}/${temp}/${ep}` }}
         style={styles.webview}
-        javaScriptEnabled={true} // Habilita JavaScript
-        domStorageEnabled={true} // Habilita o armazenamento local
-        startInLoadingState={true} // Mostra um indicador de carregamento enquanto a página está sendo carregada
+        javaScriptEnabled={true}  // Habilita JavaScript para funcionalidades
+        domStorageEnabled={true}
+        onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}  // Bloqueia qualquer navegação
+        startInLoadingState={true}  // Exibe a tela de carregamento até carregar
       />
     </View>
   );
@@ -42,6 +52,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   webview: {
-    flex: 1, // Ocupa todo o espaço disponível
+    flex: 1,
   },
 });
