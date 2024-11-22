@@ -51,9 +51,9 @@ const Favoritos = () => {
         const querySnapshot = await getDocs(
           collection(db, "cineData", userId, "favoritos")
         );
-        let movies: Movie[] = []; // Array para armazenar os filmes como objetos
+        let movies: Movie[] = []; 
         querySnapshot.forEach((doc) => {
-          // Aqui estamos coletando o nome, sobre, poster e backdrop
+         
           const movie = {
             nome: doc.get("nome"),
             sobre: doc.get("sobre"),
@@ -61,10 +61,10 @@ const Favoritos = () => {
             backdrop: doc.get("backdrop"),
             id: doc.id,
           };
-          movies.push(movie); // Adiciona o objeto do filme ao array
+          movies.push(movie); 
         });
         settestdados(movies);
-        console.log(movies); // Atualiza o estado com o array de filmes
+       
       } catch (error) {
         console.error("Erro ao buscar dados: ", error);
       }
