@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   FlatList,
   TouchableOpacity,
+  Dimensions,
 } from "react-native";
 import { Image } from "expo-image";
 import { db } from "../../CineMax/firebaseConfig";
@@ -22,9 +23,9 @@ interface Movie {
   backdrop: string;
   id: string;
 }
-
+const width = Dimensions.get("window").width;
 const Favoritos = () => {
-    const userId = "R2IqDjgdrERzRKkV8gDUhX5nQp62";
+  const userId = "R2IqDjgdrERzRKkV8gDUhX5nQp62";
   const scrollY = useRef(new Animated.Value(0)).current;
   const lastScrollY = useRef(0);
   const [testdados, settestdados] = useState<any[]>([]);
@@ -44,16 +45,15 @@ const Favoritos = () => {
       },
     }
   );
-  
+
   useEffect(() => {
     const getUsers = async () => {
       try {
         const querySnapshot = await getDocs(
           collection(db, "cineData", userId, "favoritos")
         );
-        let movies: Movie[] = []; 
+        let movies: Movie[] = [];
         querySnapshot.forEach((doc) => {
-         
           const movie = {
             nome: doc.get("nome"),
             sobre: doc.get("sobre"),
@@ -61,20 +61,20 @@ const Favoritos = () => {
             backdrop: doc.get("backdrop"),
             id: doc.id,
           };
-          movies.push(movie); 
+          movies.push(movie);
         });
         settestdados(movies);
-       
       } catch (error) {
         console.error("Erro ao buscar dados: ", error);
       }
     };
     getUsers();
   }, []);
-function removeFav(movieId: string) {
+  function removeFav(movieId: string) {
     delFav(movieId);
-    settestdados((prevState: Movie[]) => prevState.filter(movie => movie.id !== movieId));
-    
+    settestdados((prevState: Movie[]) =>
+      prevState.filter((movie) => movie.id !== movieId)
+    );
   }
   const renderMovies = ({ item }: { item: Movie }) => (
     <View style={styles.containeRender} key={item.nome}>
@@ -83,7 +83,8 @@ function removeFav(movieId: string) {
         source={{ uri: `https://image.tmdb.org/t/p/w300/${item.backdrop}` }}
       />
       <Text style={styles.textRender}>{item.nome}</Text>
-      <TouchableOpacity onPress={() => removeFav(item.id)}
+      <TouchableOpacity
+        onPress={() => removeFav(item.id)}
         style={{
           width: "20%",
           justifyContent: "flex-end",
@@ -98,20 +99,30 @@ function removeFav(movieId: string) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView onScroll={scrollRoda}>
-        <View style={styles.container2}>
-          <FlatList
-            data={testdados}
-            renderItem={renderMovies}
-            keyExtractor={(item) => item.nome}
-            horizontal={false}
-            initialNumToRender={4}
-            maxToRenderPerBatch={10}
-            windowSize={10}
-            showsHorizontalScrollIndicator={false}
-          />
+      <View style={styles.container2}>
+        <View style={styles.options}>
+          <TouchableOpacity
+          style={styles.toqueOptions}>
+
+            <Text style={styles.textOptions}>Filmes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.toqueOptions}>
+            <Text style={styles.textOptions}>Series</Text>
+          </TouchableOpacity>
         </View>
-      </ScrollView>
+        <FlatList
+          onScroll={scrollRoda}
+          data={testdados}
+          renderItem={renderMovies}
+          keyExtractor={(item) => item.nome}
+          horizontal={false}
+          initialNumToRender={4}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
+
       <Menu isVisible={menuVisible} />
     </SafeAreaView>
   );
@@ -119,6 +130,24 @@ function removeFav(movieId: string) {
 
 export default Favoritos;
 const styles = StyleSheet.create({
+  textOptions: { color: "white", fontSize: 15 },
+  toqueOptions: {
+    borderWidth: 1,
+    borderColor: "white",
+    borderRadius: 30,
+    
+    width: 70,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  options: {
+    width: width,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    paddingBottom: 10,
+  },
   containeRender: {
     flex: 1,
     alignItems: "center",
@@ -143,6 +172,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#02082c",
   },
   container2: {
+    width: width,
     flexDirection: "column",
     height: "100%",
     paddingTop: 80,
