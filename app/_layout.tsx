@@ -1,10 +1,11 @@
 import { Stack } from "expo-router";
 import { useRouter } from "expo-router";
-import { View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, } from "react-native";
 
 import SearchIcon from "../assets/images/search.svg";
 export default function RootLayout() {
   const router = useRouter();
+
   const Logo = () => {
     return (
       <View
@@ -27,11 +28,10 @@ export default function RootLayout() {
   };
   return (
 
- 
     <Stack>
       <Stack.Screen
         name="index"
-        options={{ headerShown: false, statusBarTranslucent: true }}
+        options={{ headerShown: false, statusBarHidden: true }}
       />
       <Stack.Screen
         name="info"
@@ -39,7 +39,7 @@ export default function RootLayout() {
         options={{
           headerTitle: () => <Logo />,
           headerShown: true,
-          statusBarTranslucent: true,
+         
           headerTintColor: "white",
           headerStyle: stileHeader,
           headerTransparent: true,
@@ -50,7 +50,7 @@ export default function RootLayout() {
         name="VideoPlayer"
         options={{
           statusBarHidden: false,
-          statusBarTranslucent: true,
+       
           headerShown: false,
         }}
       />
@@ -59,7 +59,7 @@ export default function RootLayout() {
         options={{
           headerTitle: () => <Logo />,
           headerShown: true,
-          statusBarTranslucent: true,
+     
           headerTintColor: "white",
           headerStyle: stileHeader,
           headerTransparent: true,
@@ -69,7 +69,7 @@ export default function RootLayout() {
           <Stack.Screen
         name="search"
         options={{
-          statusBarColor:'rgb(5, 7, 32)',
+          statusBarBackgroundColor:'rgb(5, 7, 32)',
           headerShown: false,
         }}
       />
@@ -78,14 +78,13 @@ export default function RootLayout() {
         options={{
           headerTitle: () => <Logo />,
           headerShown: true,
-          statusBarTranslucent: true,
           headerTintColor: "white",
           headerStyle: stileHeader,
           headerTransparent: true,
         }}
       />
     </Stack>
-  
+ 
   
   );
 }

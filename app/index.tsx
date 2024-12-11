@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
-import { memo } from "react";
+import React, { useEffect, useState, useRef, memo } from "react";
+import { enableScreens } from 'react-native-screens';
 import {
   Text,
   View,
@@ -8,8 +8,9 @@ import {
   StyleSheet,
   Animated,
   TouchableOpacity,
-} from "react-native";
 
+} from "react-native";
+import { StatusBar } from "expo-status-bar";
 import Menu from "@/components/menu";
 import Header from "@/components/header";
 import CompHome from "@/components/CompHome";
@@ -23,7 +24,7 @@ const Index = () => {
   const [opcao, setOpcao] = useState("inicio");
  
   const scrollY = useRef(new Animated.Value(0)).current;
-  const lastScrollY = useRef(0); // Armazena o último valor do scroll
+  const lastScrollY = useRef(0); 
   const [menuVisible, setMenuVisible] = useState(true);
 
   const scrollRoda = Animated.event(
@@ -72,7 +73,9 @@ const Index = () => {
         return null;
     }
   };
-  console.log(opcao);
+  useEffect(() => {
+    enableScreens();
+  }, []);
   if (loading)
     return (
       <View style={styles.loadingContainer}>
@@ -80,24 +83,33 @@ const Index = () => {
       </View>
     );
   return (
-    <SafeAreaView style={styles.container2}>
+    <SafeAreaView  style={styles.container2} >
+       <StatusBar hidden/>
       <Header scrollY={scrollY} />
-      <ScrollView onScroll={scrollRoda}>
+     
+      <ScrollView scrollEventThrottle={16} onScroll={scrollRoda}>
         <View style={styles.opcoesSerieFilme}>
           {options.map((option) => (
             <TouchableOpacity
               key={option.value}
               onPress={() => setOpcao(option.value)}
-              style={styles.viewFilmesSeries}
-            >
-              <Text style={styles.textoFilmesSeries}>{option.label}</Text>
-              {opcao === option.value && <View style={styles.highlightBar} />}
+              style={[
+                styles.viewFilmesSeries,
+                { borderColor: opcao === option.value ? '#ffffff' : '#747474' },
+                { borderWidth: opcao === option.value ? 2 : 1 },
+              ]}
+              >
+              <Text style={[
+                styles.textoFilmesSeries,
+                { color: opcao === option.value ? '#ffffff' : '#747474' } // Aplicação dinâmica
+              ]}>{option.label}</Text>
+              
             </TouchableOpacity>
           ))}
         </View>
         {renderContent()}
       </ScrollView>
-      <Menu isVisible={menuVisible}/>
+      <Menu page={'home'} isVisible={menuVisible}/>
     </SafeAreaView>
   );
 };
@@ -126,6 +138,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     justifyContent: "space-evenly",
     marginTop: 90,
+   
   },
   textoFilmesSeries: {
     color: "#ffffff",
@@ -133,7 +146,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   viewFilmesSeries: {
+    
     borderColor: "#ffffff",
-    paddingBottom: 5,
+    justifyContent:'center',
+    alignItems:'center',
+    paddingLeft:8,
+    paddingRight:8,
+    paddingTop:4,
+    paddingBottom:4,
+    borderWidth:1,
+    borderRadius:20,
   },
 });

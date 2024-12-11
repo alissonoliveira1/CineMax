@@ -1,7 +1,7 @@
 import { FlatList, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
-import api from "@/app/services";
+import api from "@/services";
 
 interface TMDB {
   name: string;
@@ -19,7 +19,7 @@ const HomeSearch = () => {
         const response = await api.get("discover/tv", {
           params: {
             api_key: API_KEY,
-            language: "pt-BR",
+            language: "pt-Br",
             page: 1,
           },
         });

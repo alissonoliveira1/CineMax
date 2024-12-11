@@ -2,7 +2,7 @@
 import { View, FlatList,TouchableOpacity,StyleSheet} from "react-native";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import api from "../app/services";
+import api from "../services";
 interface ListDestaqueProps {
 
 }
@@ -28,7 +28,7 @@ const ListDestaque: React.FC<{ type: ListDestaqueProps }> = ({type}) =>{
             const response = await api.get(`discover/${type}`, {
               params: {
                 api_key: API_KEY,
-                language: "pt-BR",
+                language: "pt-Br",
                 page: 1,
               },
             });

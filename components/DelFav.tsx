@@ -1,4 +1,4 @@
-import { db } from '../../CineMax/firebaseConfig'; 
+import { db } from "../firebaseConfig";
 import { doc, deleteDoc } from "firebase/firestore";
 
 

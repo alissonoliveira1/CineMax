@@ -10,7 +10,7 @@ import {
   FlatList,
 } from "react-native";
 import { Image } from "expo-image";
-import api from "./services";
+import api from "../services";
 import HomeSearch from "@/components/HomeSearch";
 
 const { width } = Dimensions.get("window");

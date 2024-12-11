@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import api from "../app/services/index";
+import api from "../services/index";
 import {
     View,
     StyleSheet,

@@ -1,11 +1,9 @@
 import {
   View,
   Text,
-  ImageBackground,
   Dimensions,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -14,9 +12,10 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Shadow } from "react-native-shadow-2";
 import axios from "axios";
-import api from "../app/services";
+import api from "../services";
 
 const { width } = Dimensions.get("window");
+const aspectRadio = width * 0.9;
 const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
 const currentDate = new Date().toISOString().split("T")[0];
 
@@ -90,7 +89,7 @@ interface ImageDestaqueProps {
 
 const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+ 
   const [destaque, setDestaque] = useState<
     (MediaResult & { logoPath: string }) | null
   >(null);
@@ -99,7 +98,7 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
   const [generos, setGeneros] = useState<{ id: number; name: string }[]>([]);
   const shimmerAnim = new Animated.Value(0);
 
-  // Inicia a animação
+
   Animated.loop(
     Animated.timing(shimmerAnim, {
       toValue: 1,
@@ -131,8 +130,9 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
         movies.map(async (movie) => {
           if (movie.genre_ids?.length > 0 && movie.backdrop_path) {
             const logos = await fetchMovieImages(movie.id, type);
+
             const logoPath = getLogoByPriority(logos, [
-              "pt-BR",
+              "pt-Br",
               "pt",
               "en-US",
               "en",
@@ -184,7 +184,7 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
       } catch (error) {
         console.error("Erro ao buscar destaque:", error);
       } finally {
-        setLoading(false);
+    
       }
     };
 
@@ -213,11 +213,7 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
                 },
               ]}
             >
-              <Shadow
-                offset={[0, 0]}
-                startColor={`#2e2e2e`}
-                distance={100}
-              >
+              <Shadow offset={[0, 0]} startColor={`#2e2e2e`} distance={100}>
                 <LinearGradient
                   colors={["#2e2e2e", "#2e2e2e", "#2e2e2e"]}
                   style={styles.gradient}
@@ -234,14 +230,16 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
             startColor={`rgb(${coresBackground})`}
             distance={350}
           >
-            <ImageBackground
-              resizeMode="cover"
-              style={styles.image2}
-              source={{
-                uri: `https://image.tmdb.org/t/p/original/${destaque.backdrop_path}`,
-                cache: "force-cache",
-              }}
-            >
+            <View style={styles.container4}>
+              <Image
+                style={styles.image3}
+                source={{
+                  uri: `https://image.tmdb.org/t/p/original/${destaque.backdrop_path}`,
+                }}
+                cachePolicy={"disk"}
+                priority={'high'}
+              />
+
               <View style={{ width: width * 0.9 }}>
                 <Shadow
                   offset={[0, 170]}
@@ -278,7 +276,7 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
                         <Text style={styles.buttontext2}>Assistir</Text>
                       </View>
                       <TouchableOpacity
-                        onPress={() => router.push(`/info?id=${destaque.id}`)}
+                        onPress={() => router.push(destaque.name ? `/info?id=${destaque.id}` : `/infoFilmes?id=${destaque.id}`)}
                       >
                         <View style={styles.buttoninfo2}>
                           <Text style={styles.buttontext}>Informações</Text>
@@ -288,7 +286,7 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
                   </View>
                 </Shadow>
               </View>
-            </ImageBackground>
+            </View>
           </Shadow>
         </View>
       )}
@@ -325,18 +323,39 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  image2: {
-    overflow: "hidden",
-    justifyContent: "flex-end",
+
+  image3: {
     width: width * 0.9,
     height: 400,
-    backgroundColor: "#1d1e27",
+    borderRadius: 10,
+   
+    position: "absolute",
+  },
+  container4: {
+    transform: [{ translateY: -40 }],
+    width: width * 0.9,
+    height: 400,
+    justifyContent: "flex-end",
+    position: "relative",
+    overflow: "hidden",
+    elevation: 10,
+    zIndex: 1,
+    borderColor: "rgb(141, 141, 141)",
+    borderWidth: 1,
+    borderRadius: 10,
+  },
+
+  trailer: {
+    flex: 1,
+  },
+  containervideo: {
+    width: width * 0.9,
+    height: 400,
+    aspectRatio: aspectRadio / 400,
+    overflow: "hidden",
     borderRadius: 10,
     borderColor: "rgb(141, 141, 141)",
     borderWidth: 1,
-    zIndex: 1,
-    elevation: 10,
-    transform: [{ translateY: -50 }],
   },
   containerButtonPrincipal: {
     justifyContent: "flex-end",
@@ -405,5 +424,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  image2: {
+    overflow: "hidden",
+    justifyContent: "flex-end",
+    width: width * 0.9,
+    height: 400,
+    backgroundColor: "#1d1e27",
+    borderRadius: 10,
+    borderColor: "rgb(141, 141, 141)",
+    borderWidth: 1,
+    zIndex: 1,
+    elevation: 10,
+    transform: [{ translateY: -40 }],
+ 
   },
 });

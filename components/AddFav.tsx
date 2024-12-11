@@ -7,6 +7,7 @@ export const addFav = async ( movie:any) => {
         await setDoc(userFavoriteDoc, {
           nome: movie.nome,
           sobre: movie.sobre,
+          categoria: movie.categoria,
           poster: movie.poster,
           backdrop: movie.backdrop,
         });

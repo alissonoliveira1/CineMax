@@ -1,7 +1,7 @@
 import { View,FlatList,StyleSheet,TouchableOpacity} from "react-native";
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import api from "@/app/services";
+import api from "@/services";
 import TMDBImage from "./TMDBImage";
 
 interface TVShow {
@@ -25,7 +25,7 @@ useEffect(()=>{
         const response = await api.get(`/movie/${id}/similar`,{
             params:{
                 api_key:API_KEY,
-                language:'pt-BR',
+                language:'pt-Br',
                 page:1}
         });
         setFilmesemelhantes(response.data.results);

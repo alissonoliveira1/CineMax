@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useGlobalSearchParams } from "expo-router";
-import api from "./services";
+import api from "../services";
 import axios from "axios";
 import FavSvg from "../assets/images/star-fill.svg";
 import TrlSvg from "../assets/images/film.svg";
@@ -9,6 +9,7 @@ import ListSemelhantes from "@/components/ListSemelhantes";
 import { Shadow } from "react-native-shadow-2";
 import { useRouter } from "expo-router";
 import Menu from "@/components/menu";
+import { addFav } from "@/components/AddFav";
 import {
   Text,
   View,
@@ -19,6 +20,7 @@ import {
   TouchableOpacity,
   Dimensions,
   ImageBackground,
+  Animated,
 } from "react-native";
 
 const fixedWidth = Dimensions.get("window").width * 0.7;
@@ -37,6 +39,9 @@ const Info = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const params = useGlobalSearchParams();
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const lastScrollY = useRef(0); // Armazena o último valor do scroll
+  const [menuVisible, setMenuVisible] = useState(true);
   const { id } = params;
   const [seasons, setSeasons] = useState<any>([]);
   const [titleTemp, setTitleTemp] = useState<string | null>(
@@ -86,10 +91,10 @@ const Info = () => {
 
         const logos = logoResponse.data.logos.filter(
           (logo: any) =>
-            logo.iso_639_1 === "pt" ||
             logo.iso_639_1 === "pt-BR" ||
+            logo.iso_639_1 === "en-US" ||
             logo.iso_639_1 === "en" ||
-            logo.iso_639_1 === "en-US"
+            logo.iso_639_1 === "pt"
         );
         if (logos.length > 0) {
           setLogoUrl(
@@ -110,6 +115,7 @@ const Info = () => {
     };
     fetchData();
   }, [id]);
+
   const ageRatingImages: Record<AgeRating, any> = {
     L: require("../assets/images/L.png"),
     "10": require("../assets/images/NR10.png"),
@@ -156,24 +162,27 @@ const Info = () => {
 
   useEffect(() => {
     if (selectedSeason === null) return;
-
+    const controller = new AbortController();
+  
     const fetchEpisodes = async () => {
       try {
         const response = await api.get(`tv/${id}/season/${selectedSeason}`, {
           params: { api_key: API_KEY, language: "pt-BR" },
+          signal: controller.signal,
         });
         const availableEpisodes = response.data.episodes.filter(
-          (episode: { air_date: string | number | Date }) => {
-            const airDate = new Date(episode.air_date);
-            return airDate <= new Date();
-          }
+          (episode:any) => new Date(episode.air_date) <= new Date()
         );
         setEpisodes(availableEpisodes);
       } catch (error) {
-        console.error("Erro ao buscar episódios:", error);
+        if ((error as any).name !== "AbortError") {
+          console.error("Erro ao buscar episódios:", error);
+        }
       }
     };
+  
     fetchEpisodes();
+    return () => controller.abort();
   }, [id, selectedSeason]);
 
   const handleSeasonSelect = (season_number: number, name: string) => {
@@ -182,6 +191,35 @@ const Info = () => {
     setTitleTemp(name);
     setIsPressed(!isPressed);
   };
+  const scrollRoda = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    {
+      useNativeDriver: false,
+      listener: (event: any) => {
+        const currentScrollY = event.nativeEvent.contentOffset.y;
+
+    
+        if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+          setMenuVisible(false); 
+        } else if (currentScrollY < lastScrollY.current) {
+          setMenuVisible(true); 
+        }
+
+        lastScrollY.current = currentScrollY; 
+      },
+    }
+  );
+  function handleAddFav(){
+    const movie = {
+      nome: dados.name,
+      categoria: "series",
+      sobre: dados.overview,
+      poster: dados.poster_path,
+      backdrop: dados.backdrop_path,
+      id: id
+    };
+    addFav(movie);
+  }
   if (loading) {
     return (
       <View
@@ -253,7 +291,8 @@ const Info = () => {
           <View style={styles.overlay} />
         </ImageBackground>
         <FlatList
-          data={selectedOption === "episodios" && !isPressed ? epsode : []}
+        onScroll={scrollRoda}
+        data={selectedOption === "episodios" ? epsode || [] : []}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderEps}
           style={{ height: "100%", zIndex: 5, }}
@@ -307,7 +346,7 @@ const Info = () => {
                   </Text>
                 </View>
                 <View style={styles.opcoesGerais}>
-                  <TouchableOpacity style={styles.alinharOpcoes}>
+                  <TouchableOpacity onPress={handleAddFav} style={styles.alinharOpcoes}>
                     <FavSvg width={20} height={20} color={"white"} />
                     <Text style={styles.textOpcoesGerais}>salvar</Text>
                   </TouchableOpacity>
@@ -375,7 +414,7 @@ const Info = () => {
           </View>
         )}
       </View>
-      <Menu/>
+      <Menu page={''} isVisible={menuVisible}/>
     </SafeAreaView>
   );
 };

@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import ListSemelhantes from "@/components/ListSemelhantes";
 import { Shadow } from "react-native-shadow-2";
-import api from "./services";
+import api from "../services";
 import { addFav } from "@/components/AddFav";
 type AgeRating =
   | "L"
@@ -74,7 +74,7 @@ function InfoFilmes() {
     try {
       const [dadosResponse, logoResponse] = await Promise.all([
         api.get(`movie/${id}`, {
-          params: { api_key: API_KEY, language: "pt-BR" },
+          params: { api_key: API_KEY, language: "pt-Br" },
         }),
         api.get(`movie/${id}/images`, { params: { api_key: API_KEY } }),
       ]);
@@ -83,7 +83,7 @@ function InfoFilmes() {
 
       const logos = logoResponse.data.logos.filter(
         (logo: any) =>
-          logo.iso_639_1 === "pt-BR" ||
+          logo.iso_639_1 === "pt-Br" ||
           logo.iso_639_1 === "en" ||
           logo.iso_639_1 === "en-US"
       );
@@ -172,6 +172,7 @@ function InfoFilmes() {
 function handleAddFav(){
   const movie = {
     nome: dados.title,
+    categoria: "filmes",
     sobre: dados.overview,
     poster: dados.poster_path,
     backdrop: dados.backdrop_path,
@@ -179,6 +180,7 @@ function handleAddFav(){
   };
   addFav(movie);
 }
+console.log(dados)
   return (
     <View style={styles.container1}>
       <ImageBackground

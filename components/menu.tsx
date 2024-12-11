@@ -13,10 +13,10 @@ import Favoritos from "../assets//images/star-fill.svg";
 import Conta from "../assets//images/person-circle.svg";
 interface MenuProps {
   isVisible: boolean;
+  page:any
 }
 
-const Menu: React.FC<MenuProps> = ({ isVisible }) => {
-  const [barra, setBarra] = useState("home");
+const Menu: React.FC<MenuProps> = ({ isVisible, page }) => {
   const router = useRouter();
   const translateY = React.useRef(new Animated.Value(0)).current;
 
@@ -38,37 +38,37 @@ const Menu: React.FC<MenuProps> = ({ isVisible }) => {
       ]}
     >
       <TouchableOpacity
-        onPressIn={() => router.push("/")}
-        onPress={() => setBarra("home")}
+        onPress={() => router.push("/")}
+     
         style={styles.optMenu}
       >
         <Home
-          width={23}
-          height={23}
-          color={barra === "home" ? "white" : "#a7a7a7"}
+          width={21}
+          height={21}
+          color={page === "home" ? "white" : "#a7a7a7"}
         />
         <Text style={styles.optText}>Home</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        onPressIn={() => router.push("/favoritos")}
-        onPress={() => setBarra("favoritos")}
+        onPress={() => router.push("/favoritos")}
+      
         style={styles.optMenu}
       >
         <Favoritos
-          color={barra === "favoritos" ? "white" : "#a7a7a7"}
-          width={23}
-          height={23}
+          color={page === "favoritos" ? "white" : "#a7a7a7"}
+          width={21}
+          height={21}
         />
         <Text style={styles.optText}>Favoritos</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        onPress={() => setBarra("conta")}
+   
         style={styles.optMenu}
       >
         <Conta
-          color={barra === "conta" ? "white" : "#a7a7a7"}
-          width={23}
-          height={23}
+          color={page === "conta" ? "white" : "#a7a7a7"}
+          width={21}
+          height={21}
         />
         <Text style={styles.optText}>Conta</Text>
       </TouchableOpacity>
@@ -82,10 +82,11 @@ const styles = StyleSheet.create({
     flex: 1,
     width: width,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-around",
     backgroundColor: "#000000b9",
-    padding: 10,
+    paddingTop: 7,
+    paddingBottom: 5,
     zIndex: 40,
     bottom: 0,
     position: "absolute",
