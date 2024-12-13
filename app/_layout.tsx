@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { useRouter } from "expo-router";
-import { View, TouchableOpacity, } from "react-native";
+import { View, TouchableOpacity,Text } from "react-native";
 
 import SearchIcon from "../assets/images/search.svg";
 export default function RootLayout() {
@@ -10,11 +10,13 @@ export default function RootLayout() {
     return (
       <View
         style={{
-          width: "90%",
+          width: "97%",
+         
           alignItems: "flex-end",
-          justifyContent: "center",
+          justifyContent: "space-around",
         }}
       >
+      
         <TouchableOpacity onPress={() => router.push(`/search`)}>
           <SearchIcon color={"white"} width={24} height={24} />
         </TouchableOpacity>
@@ -56,10 +58,11 @@ export default function RootLayout() {
       />
       <Stack.Screen
         name="favoritos"
+
         options={{
           headerTitle: () => <Logo />,
           headerShown: true,
-     
+    
           headerTintColor: "white",
           headerStyle: stileHeader,
           headerTransparent: true,

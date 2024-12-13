@@ -108,12 +108,12 @@ const Favoritos = () => {
             poster: doc.get("poster"),
             backdrop: doc.get("backdrop"),
             id: doc.id,
-            categoria: doc.get("categoria"), // Adicione isso se a categoria existir
+            categoria: doc.get("categoria"), 
           };
           movies.push(movie);
         });
         settestdados(movies);
-        setFilteredData(movies); // Inicializa com todos os dados
+        setFilteredData(movies); 
       } catch (error) {
         console.error("Erro ao buscar dados: ", error);
       }

@@ -45,7 +45,8 @@ const Info = () => {
   const { id } = params;
   const [seasons, setSeasons] = useState<any>([]);
   const [titleTemp, setTitleTemp] = useState<string | null>(
-    seasons.length > 0 ? seasons[0].name : null );
+    seasons.length > 0 ? seasons[0].name : null
+  );
   const [classificacaoImagem, setClassificacaoImagem] = useState<any>(null);
   const [epsode, setEpisodes] = useState<any>(null);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
@@ -163,7 +164,7 @@ const Info = () => {
   useEffect(() => {
     if (selectedSeason === null) return;
     const controller = new AbortController();
-  
+
     const fetchEpisodes = async () => {
       try {
         const response = await api.get(`tv/${id}/season/${selectedSeason}`, {
@@ -171,7 +172,7 @@ const Info = () => {
           signal: controller.signal,
         });
         const availableEpisodes = response.data.episodes.filter(
-          (episode:any) => new Date(episode.air_date) <= new Date()
+          (episode: any) => new Date(episode.air_date) <= new Date()
         );
         setEpisodes(availableEpisodes);
       } catch (error) {
@@ -180,7 +181,7 @@ const Info = () => {
         }
       }
     };
-  
+
     fetchEpisodes();
     return () => controller.abort();
   }, [id, selectedSeason]);
@@ -198,27 +199,28 @@ const Info = () => {
       listener: (event: any) => {
         const currentScrollY = event.nativeEvent.contentOffset.y;
 
-    
         if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-          setMenuVisible(false); 
+          setMenuVisible(false);
         } else if (currentScrollY < lastScrollY.current) {
-          setMenuVisible(true); 
+          setMenuVisible(true);
         }
 
-        lastScrollY.current = currentScrollY; 
+        lastScrollY.current = currentScrollY;
       },
     }
   );
-  function handleAddFav(){
+  function handleAddFav() {
     const movie = {
       nome: dados.name,
       categoria: "series",
       sobre: dados.overview,
       poster: dados.poster_path,
       backdrop: dados.backdrop_path,
-      id: id
+      id: id,
     };
     addFav(movie);
+
+    
   }
   if (loading) {
     return (
@@ -236,13 +238,12 @@ const Info = () => {
   }
   const renderEps = ({ item }: { item: any }) => (
     <TouchableOpacity
-
-    onPress={() =>
+      onPress={() =>
         router.push(
           `/VideoPlayer?imdb_id=${id}&temp=${item.season_number}&ep=${item.episode_number}`
         )
       }
-      style={{ alignItems: "center",backgroundColor: "rgb(3, 4, 7)"  }}
+      style={{ alignItems: "center", backgroundColor: "rgb(3, 4, 7)" }}
     >
       <View style={styles.containerEpsAll}>
         <View style={styles.viewCapaEps}>
@@ -268,6 +269,7 @@ const Info = () => {
       </View>
     </TouchableOpacity>
   );
+  
 
   const renderSeason = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -291,41 +293,39 @@ const Info = () => {
           <View style={styles.overlay} />
         </ImageBackground>
         <FlatList
-        onScroll={scrollRoda}
-        data={selectedOption === "episodios" ? epsode || [] : []}
+          onScroll={scrollRoda}
+          data={selectedOption === "episodios" ? epsode || [] : []}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderEps}
-          style={{ height: "100%", zIndex: 5, }}
+          style={{ height: "100%", zIndex: 5 }}
           ListEmptyComponent={<Text>Nenhum episódio encontrado.</Text>}
           ListHeaderComponent={
             <View style={{ paddingTop: 300 }}>
               <Shadow
-              style={{ zIndex: 16 }}
-              offset={[0, 125]}
-              startColor={`rgb(3, 4, 7)`}
-              distance={180}
-              safeRender
-              paintInside={true}
-            >
+                style={{ zIndex: 16 }}
+                offset={[0, 125]}
+                startColor={`rgb(3, 4, 7)`}
+                distance={180}
+                safeRender
+                paintInside={true}
+              >
                 <View style={{ width: width }}></View>
               </Shadow>
               <View style={styles.containerInfos}>
-              
-                  <View style={styles.VwLogo}>
-                    {logoUrl ? (
-                      <Image
-                        source={{ uri: logoUrl }}
-                        style={{
-                          width: fixedWidth,
-                          height: fixedWidth * aspectRatio,
-                          resizeMode: "contain",
-                        }}
-                      />
-                    ) : (
-                      <Text style={styles.text}>{dados.name}</Text>
-                    )}
-                  </View>
-            
+                <View style={styles.VwLogo}>
+                  {logoUrl ? (
+                    <Image
+                      source={{ uri: logoUrl }}
+                      style={{
+                        width: fixedWidth,
+                        height: fixedWidth * aspectRatio,
+                        resizeMode: "contain",
+                      }}
+                    />
+                  ) : (
+                    <Text style={styles.text}>{dados.name}</Text>
+                  )}
+                </View>
 
                 <View style={styles.info}>
                   {classificacaoImagem && (
@@ -339,61 +339,64 @@ const Info = () => {
                   </Text>
                   <Text style={styles.textTemps}>{ano}</Text>
                 </View>
-                <View style={{backgroundColor: "rgb(3, 4, 7)" }}>
-                <View style={styles.ViewOverVW}>
-                  <Text style={styles.textOverVW}>
-                    {dados.overview ? dados.overview.split(".")[0] + "." : ""}
-                  </Text>
-                </View>
-                <View style={styles.opcoesGerais}>
-                  <TouchableOpacity onPress={handleAddFav} style={styles.alinharOpcoes}>
-                    <FavSvg width={20} height={20} color={"white"} />
-                    <Text style={styles.textOpcoesGerais}>salvar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.alinharOpcoes}>
-                    <TrlSvg width={20} height={20} color={"white"} />
-                    <Text style={styles.textOpcoesGerais}>trailer</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.alinharOpcoes}>
-                    <CompSvg width={20} height={20} color={"white"} />
-                    <Text style={styles.textOpcoesGerais}>compartilhar</Text>
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                  style={{ alignItems: "center" }}
-                  onPress={() => setIsPressed(!isPressed)}
-                >
-                  <View style={styles.button}>
-                    <Text style={styles.textButton}>{titleTemp}</Text>
+                <View style={{ backgroundColor: "rgb(3, 4, 7)" }}>
+                  <View style={styles.ViewOverVW}>
+                    <Text style={styles.textOverVW}>
+                      {dados.overview ? dados.overview.split(".")[0] + "." : ""}
+                    </Text>
                   </View>
-                </TouchableOpacity>
+                  <View style={styles.opcoesGerais}>
+                    <TouchableOpacity
+                      onPress={handleAddFav}
+                      style={styles.alinharOpcoes}
+                    >
+                      <FavSvg width={20} height={20} color={"white"} />
+                      <Text style={styles.textOpcoesGerais}>salvar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.alinharOpcoes}>
+                      <TrlSvg width={20} height={20} color={"white"} />
+                      <Text style={styles.textOpcoesGerais}>trailer</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.alinharOpcoes}>
+                      <CompSvg width={20} height={20} color={"white"} />
+                      <Text style={styles.textOpcoesGerais}>compartilhar</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity
+                    style={{ alignItems: "center" }}
+                    onPress={() => setIsPressed(!isPressed)}
+                  >
+                    <View style={styles.button}>
+                      <Text style={styles.textButton}>{titleTemp}</Text>
+                    </View>
+                  </TouchableOpacity>
 
-                {/* Botões de alternância */}
-                <View style={styles.textoEps}>
-                  <TouchableOpacity
-                    onPress={() => setSelectedOption("episodios")}
-                  >
-                    <Text style={styles.textEps}>Episódios</Text>
-                    {selectedOption === "episodios" && (
-                      <View style={styles.highlightBar} />
-                    )}
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setSelectedOption("seriesSemelhantes")}
-                  >
-                    <Text style={styles.textEps}>Séries Semelhantes</Text>
-                    {selectedOption === "seriesSemelhantes" && (
-                      <View style={styles.highlightBar} />
-                    )}
-                  </TouchableOpacity>
+        
+                  <View style={styles.textoEps}>
+                    <TouchableOpacity
+                      onPress={() => setSelectedOption("episodios")}
+                    >
+                      <Text style={styles.textEps}>Episódios</Text>
+                      {selectedOption === "episodios" && (
+                        <View style={styles.highlightBar} />
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setSelectedOption("seriesSemelhantes")}
+                    >
+                      <Text style={styles.textEps}>Séries Semelhantes</Text>
+                      {selectedOption === "seriesSemelhantes" && (
+                        <View style={styles.highlightBar} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View></View>
+              </View>
             </View>
           }
-          scrollEnabled={!isPressed} // Desativa rolagem ao exibir temporadas em tela cheia
+          scrollEnabled={!isPressed}
           nestedScrollEnabled={true}
           ListFooterComponent={
-            // Renderiza conteúdo conforme a opção selecionada
             <View>
               {selectedOption === "seriesSemelhantes" && !isPressed && (
                 <ListSemelhantes ids={dados.id} />
@@ -402,7 +405,7 @@ const Info = () => {
           }
         />
 
-        {/* Tela cheia para as temporadas */}
+   
         {isPressed && (
           <View style={styles.fullscreenOverlay}>
             <FlatList
@@ -414,7 +417,7 @@ const Info = () => {
           </View>
         )}
       </View>
-      <Menu page={''} isVisible={menuVisible}/>
+      <Menu page={""} isVisible={menuVisible} />
     </SafeAreaView>
   );
 };
@@ -439,7 +442,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingTop: 80,
-    zIndex:80
+    zIndex: 80,
   },
 
   container: {
@@ -481,14 +484,13 @@ const styles = StyleSheet.create({
     width: fixedWidth,
     height: fixedWidth * aspectRatio,
     resizeMode: "contain",
-  
   },
 
   VwLogo: {
     width: width,
     height: fixedWidth * aspectRatio,
     marginBottom: 0,
-    marginLeft: 5,
+    marginLeft: 10,
     backgroundColor: "transparent",
     justifyContent: "flex-start",
     alignItems: "flex-start",
@@ -506,18 +508,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     resizeMode: "cover",
     paddingTop: 300,
-  
-    zIndex: -1,
+    zIndex: 1,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject, 
-    backgroundColor: "rgba(0, 0, 0, 0.3)", 
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
   info: {
     marginTop: 20,
     width: width * 1,
     alignItems: "center",
-    marginLeft: 20,
+    marginLeft: 10,
     flexDirection: "row",
     gap: 10,
   },
@@ -528,14 +529,12 @@ const styles = StyleSheet.create({
   ViewOverVW: {
     marginTop: 5,
     marginBottom: 10,
-    marginHorizontal: 20,
+    marginHorizontal: 10,
     width: width * 0.92,
   },
   textOverVW: {
     color: "#e4e4e4",
     fontSize: 15,
-   
-    
   },
   textoEps: {
     width: width,
@@ -544,8 +543,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   textEps: {
-    marginLeft: 10,
-    marginBottom: 10,
+    paddingLeft: 5,
+    paddingRight: 5,
+    marginBottom: 3,
     fontWeight: "bold",
     fontSize: 18,
     marginTop: 5,
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "rgb(3, 4, 7)"
+    backgroundColor: "rgb(3, 4, 7)",
   },
   imageCapaEps: {
     width: 130,
@@ -599,16 +599,15 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 10,
     borderRadius: 8,
-    backgroundColor: "rgb(3, 4, 7)"
+    backgroundColor: "rgb(3, 4, 7)",
   },
   epsVw: {
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgb(3, 4, 7)"
+    backgroundColor: "rgb(3, 4, 7)",
   },
   highlightBar: {
-    marginTop: 5,
     height: 3,
     width: "100%",
     backgroundColor: "#007AFF", // Cor da barra de destaque
