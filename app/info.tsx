@@ -220,7 +220,7 @@ const Info = () => {
     };
     addFav(movie);
 
-    
+
   }
   if (loading) {
     return (
@@ -237,13 +237,14 @@ const Info = () => {
     );
   }
   const renderEps = ({ item }: { item: any }) => (
-    <TouchableOpacity
+    <View  style={{  backgroundColor:'rgb(10, 17, 4)' }}>
+      <TouchableOpacity
       onPress={() =>
         router.push(
           `/VideoPlayer?imdb_id=${id}&temp=${item.season_number}&ep=${item.episode_number}`
         )
       }
-      style={{ alignItems: "center", backgroundColor: "rgb(3, 4, 7)" }}
+      style={{ alignItems: "center", }}
     >
       <View style={styles.containerEpsAll}>
         <View style={styles.viewCapaEps}>
@@ -268,6 +269,7 @@ const Info = () => {
         </View>
       </View>
     </TouchableOpacity>
+    </View>
   );
   
 
@@ -283,7 +285,7 @@ const Info = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View>
+      <View >
         <ImageBackground
           source={{
             uri: `https://image.tmdb.org/t/p/w500${dados.poster_path}`,
@@ -297,14 +299,13 @@ const Info = () => {
           data={selectedOption === "episodios" ? epsode || [] : []}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderEps}
-          style={{ height: "100%", zIndex: 5 }}
-          ListEmptyComponent={<Text>Nenhum episódio encontrado.</Text>}
+          style={{ height: "100%", zIndex: 5, }}
           ListHeaderComponent={
             <View style={{ paddingTop: 300 }}>
               <Shadow
                 style={{ zIndex: 16 }}
                 offset={[0, 125]}
-                startColor={`rgb(3, 4, 7)`}
+                startColor={`rgb(10, 17, 4)`}
                 distance={180}
                 safeRender
                 paintInside={true}
@@ -339,7 +340,7 @@ const Info = () => {
                   </Text>
                   <Text style={styles.textTemps}>{ano}</Text>
                 </View>
-                <View style={{ backgroundColor: "rgb(3, 4, 7)" }}>
+                <View style={{ backgroundColor: "rgb(10, 17, 4)" }}>
                   <View style={styles.ViewOverVW}>
                     <Text style={styles.textOverVW}>
                       {dados.overview ? dados.overview.split(".")[0] + "." : ""}
@@ -362,15 +363,16 @@ const Info = () => {
                       <Text style={styles.textOpcoesGerais}>compartilhar</Text>
                     </TouchableOpacity>
                   </View>
+                  <View style={{justifyContent:'flex-end', width:'100%', alignItems:'flex-end'}}>
                   <TouchableOpacity
-                    style={{ alignItems: "center" }}
+                    style={styles.button}
                     onPress={() => setIsPressed(!isPressed)}
                   >
-                    <View style={styles.button}>
+                    
                       <Text style={styles.textButton}>{titleTemp}</Text>
-                    </View>
+                    
                   </TouchableOpacity>
-
+                    </View>
         
                   <View style={styles.textoEps}>
                     <TouchableOpacity
@@ -397,7 +399,7 @@ const Info = () => {
           scrollEnabled={!isPressed}
           nestedScrollEnabled={true}
           ListFooterComponent={
-            <View>
+            <View style={{width:'100%', backgroundColor: "rgb(10, 17, 4)"}}>
               {selectedOption === "seriesSemelhantes" && !isPressed && (
                 <ListSemelhantes ids={dados.id} />
               )}
@@ -426,6 +428,7 @@ const styles = StyleSheet.create({
   containerInfos: {
     width: width,
     justifyContent: "flex-start",
+   
   },
   classEtaria: {
     width: 20,
@@ -447,30 +450,17 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#010318",
+   
   },
   scrollContainer: {
     flex: 1,
-  },
-  containerTemp3: {
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    height: "100%",
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.911)",
-    zIndex: 100,
   },
   button: {
     marginTop: 5,
     marginBottom: 10,
     justifyContent: "center",
     alignItems: "center",
-    width: width * 0.98,
+    width: width * 0.38,
     height: 50,
     backgroundColor: "rgb(27, 40, 48)",
     borderRadius: 8,
@@ -556,7 +546,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "rgb(3, 4, 7)",
+    
   },
   imageCapaEps: {
     width: 130,
@@ -599,18 +589,18 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 10,
     borderRadius: 8,
-    backgroundColor: "rgb(3, 4, 7)",
+   
   },
   epsVw: {
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgb(3, 4, 7)",
+   
   },
   highlightBar: {
     height: 3,
     width: "100%",
-    backgroundColor: "#007AFF", // Cor da barra de destaque
+    backgroundColor: "#f5f5f5", 
   },
   opcoesGerais: {
     flexDirection: "row",

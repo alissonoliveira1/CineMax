@@ -277,8 +277,9 @@ console.log(dados)
                     {dados.overview ? dados.overview.split(".")[0] + "." : ""}
                   </Text>
                 </View>
+                <View style={styles.barraSepracao}></View>
                 <View>
-                  <Text style={styles.textSemelhantes}>Filmes Semelhantes</Text>
+                  <Text style={styles.textSemelhantes}>Titulos semelhantes</Text>
                   <ListSemelhantes id={dados.id} />
                 </View>
               </View>
@@ -291,6 +292,12 @@ console.log(dados)
   );
 }
 const styles = StyleSheet.create({
+  barraSepracao:{
+    width:'100%',
+    height:1,
+    backgroundColor:'#5a5a5a',
+    marginTop:10
+  },
   container1: {
     flex: 1,
     backgroundColor: "rgb(3, 4, 7)",
@@ -425,7 +432,7 @@ const styles = StyleSheet.create({
   },
   textSemelhantes:{
     color: "white",
-    fontSize: 20,
+    fontSize: 17,
     marginTop: 10,
     marginLeft: 20,
     marginBottom: 10,

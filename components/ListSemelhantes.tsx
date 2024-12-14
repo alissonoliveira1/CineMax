@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import api from "@/services";
 import TMDBImage from "./TMDBImage";
-
+import { Image } from 'expo-image';
 interface TVShow {
     genre_ids: number[];
     title: string;
@@ -51,21 +51,25 @@ useEffect(()=>{
               ? router.push(`/info?id=${item.id}`)
               : router.push(`/infoFilmes?id=${item.id}`)
           }>
-            <TMDBImage uri={`https://image.tmdb.org/t/p/w300/${item.poster_path}`} />
+            <TMDBImage uri={`https://image.tmdb.org/t/p/w300/${item.poster_path}`}/>
           </TouchableOpacity>
         </View>
       );
     return(
-        <FlatList
-        data={filmesemelhantes}
+      <View style={{justifyContent: "center",width:'100%', alignItems: "center",}}>
+          <FlatList
+        data={filmesemelhantes.slice(0, 12)}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
-        horizontal
+        numColumns={3}
+        
         initialNumToRender={4}
-        maxToRenderPerBatch={10}
-        windowSize={10}
-        showsHorizontalScrollIndicator={false}
+        maxToRenderPerBatch={4}
+        windowSize={4}
+        style={{backgroundColor: "rgb(10, 17, 4)"}}
+      
       />
+      </View>
     )
 }
 export default ListSemelhantes;
@@ -74,8 +78,16 @@ const styles = StyleSheet.create({
         position: "relative",
         marginLeft: 10,
         marginRight: 3,
+        marginTop: 20,
         paddingBottom: 10,
         display: "flex",
+        
+       
+      },
+      images:{
+        width: 150,
+        height: 220,
+        borderRadius: 5,
       },
 
 })

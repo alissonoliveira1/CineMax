@@ -115,12 +115,7 @@ const Index = () => {
 };
 export default memo(Index);
 const styles = StyleSheet.create({
-  highlightBar: {
-    marginTop: 5,
-    height: 3,
-    width: "100%",
-    backgroundColor: "#007AFF",
-  },
+
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -130,7 +125,7 @@ const styles = StyleSheet.create({
 
   container2: {
     flex: 1,
-    backgroundColor: "rgb(5, 7, 32)",
+    backgroundColor: "rgb(10, 17, 4)",
   },
 
   opcoesSerieFilme: {
