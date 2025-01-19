@@ -131,16 +131,16 @@ function InfoFilmes() {
           params: { api_key: API_KEY },
         }
       );
-
+      
       const releaseDates = response.data.results.find(
         (country: any) => country.iso_3166_1 === "BR"
       );
-
+     
       if (releaseDates) {
         const certification = releaseDates.release_dates.find(
           (release: any) => release.certification
         )?.certification;
-
+       
         if (certification) {
           const image =
             ageRatingImages[certification as AgeRating] ||
@@ -180,7 +180,7 @@ function handleAddFav(){
   };
   addFav(movie);
 }
-console.log(dados)
+
   return (
     <View style={styles.container1}>
       <ImageBackground

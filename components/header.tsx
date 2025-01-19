@@ -18,7 +18,7 @@ import { useRouter } from "expo-router";
       
       const headerBackgroundColor = scrollY.interpolate({
         inputRange: [0, 70],
-        outputRange: ['transparent', '#050720bc'], 
+        outputRange: ['transparent', '#000000b9'], 
         extrapolate: 'clamp',
 
       });

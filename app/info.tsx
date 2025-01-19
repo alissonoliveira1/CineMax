@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useGlobalSearchParams } from "expo-router";
-import api from "../services";
+import api from "@/services";
 import axios from "axios";
 import FavSvg from "../assets/images/star-fill.svg";
 import TrlSvg from "../assets/images/film.svg";
@@ -66,6 +66,7 @@ const Info = () => {
     number_of_seasons?: number;
     first_air_date?: number;
     id?: number;
+    production_companies?: [{ name: string; logo_path: string }];
   }>({});
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
@@ -339,6 +340,23 @@ const Info = () => {
                     {dados.number_of_seasons} temporadas
                   </Text>
                   <Text style={styles.textTemps}>{ano}</Text>
+                    {dados.production_companies &&
+                                  dados.production_companies[0]?.logo_path ? (
+                                    <View style={styles.viewProdutora}>
+                                      <Image
+                                      style={styles.logoProdutora}
+                                      source={{
+                                        uri: `https://image.tmdb.org/t/p/original${dados.production_companies[0].logo_path}`,
+                                      }}
+                                    />
+                                    </View>
+                                  ) : (
+                                    <Text style={styles.textInfos}>
+                                      {dados.production_companies
+                                        ? dados.production_companies[0].name
+                                        : "Nome não disponível"}
+                                    </Text>
+                                  )}
                 </View>
                 <View style={{ backgroundColor: "rgb(10, 17, 4)" }}>
                   <View style={styles.ViewOverVW}>
@@ -429,6 +447,25 @@ const styles = StyleSheet.create({
     width: width,
     justifyContent: "flex-start",
    
+  },
+  viewProdutora:{
+    padding:1,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 2,
+    backgroundColor: "#dfdfdf",
+  },
+  textInfos: {
+    color: "#ffffff",
+    fontSize: 13,
+  },
+  logoProdutora: {
+    width: 50,
+    height: 20,
+    resizeMode: "contain",
+    borderRadius: 2,
+    backgroundColor: "#dfdfdf",
+    padding:10,
   },
   classEtaria: {
     width: 20,
@@ -599,6 +636,7 @@ const styles = StyleSheet.create({
   },
   highlightBar: {
     height: 3,
+    marginBottom: 5,
     width: "100%",
     backgroundColor: "#f5f5f5", 
   },

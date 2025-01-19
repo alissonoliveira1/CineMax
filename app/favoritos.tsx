@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
-import { db } from "../firebaseConfig";
+import { db } from "@/firebaseConfig"; 
 import { getDocs, collection } from "firebase/firestore";
 import Menu from "@/components/menu";
 import Lixeira from "../assets/images/trash3-fill.svg";

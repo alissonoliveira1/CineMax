@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   Animated,
 } from "react-native";
+import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Shadow } from "react-native-shadow-2";
-import axios from "axios";
+import { useQuery } from "react-query"; // Importa o React Query
 import api from "../services";
 
 const { width } = Dimensions.get("window");
@@ -89,15 +90,79 @@ interface ImageDestaqueProps {
 
 const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
   const router = useRouter();
- 
-  const [destaque, setDestaque] = useState<
-    (MediaResult & { logoPath: string }) | null
-  >(null);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [coresBackground, setCoresBackground] = useState(["9, 14, 82"]);
-  const [generos, setGeneros] = useState<{ id: number; name: string }[]>([]);
-  const shimmerAnim = new Animated.Value(0);
 
+  const { data: generos, error: generosError } = useQuery(
+    ["generos"],
+    async () => {
+      const { data } = await api.get("genre/tv/list", {
+        params: { api_key: API_KEY, language: "pt-BR" },
+      });
+      return data.genres;
+    }
+  );
+
+  const { data: destaque, error: destaqueError } = useQuery(
+    ["destaque", generos],
+    async () => {
+      if (!generos || generos.length === 0) return null;
+
+      const filmesComLogoEGênero: Array<MediaResult & { logoPath: string }> =
+        [];
+      const fetchMovies = generos.map(async (genero: any) => {
+        const movies = await fetchMedia(type, genero.id);
+        const filteredMovies = await Promise.all(
+          movies.map(async (movie) => {
+            if (movie.genre_ids?.length > 0 && movie.backdrop_path) {
+              const logos = await fetchMovieImages(movie.id, type);
+
+              const logoPath = getLogoByPriority(logos, [
+                "pt-Br",
+                "pt",
+                "en-US",
+                "en",
+              ]);
+              if (logoPath) {
+                return { ...movie, logoPath };
+              }
+            }
+            return null;
+          })
+        );
+        filmesComLogoEGênero.push(
+          ...filteredMovies.filter(
+            (movie): movie is MediaResult & { logoPath: string } =>
+              movie !== null
+          )
+        );
+      });
+
+      await Promise.all(fetchMovies);
+
+      if (filmesComLogoEGênero.length > 0) {
+        const randomIndex = Math.floor(
+          Math.random() * filmesComLogoEGênero.length
+        );
+        return filmesComLogoEGênero[randomIndex];
+      }
+      return null;
+    },
+    { enabled: !!generos }
+  );
+
+  const { data: coresBackground, error: coresError } = useQuery(
+    ["coresBackground", destaque],
+    async () => {
+      if (!destaque) return [];
+      const imageUrl = `https://image.tmdb.org/t/p/w500${destaque.backdrop_path}`;
+      const { data } = await axios.get(
+        `https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`
+      );
+      return data.dominantColor;
+    },
+    { enabled: !!destaque }
+  );
+
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   Animated.loop(
     Animated.timing(shimmerAnim, {
@@ -111,90 +176,11 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
     inputRange: [0, 1],
     outputRange: [-300, Dimensions.get("window").width],
   });
-  const loadGeneros = useCallback(async () => {
-    try {
-      const { data } = await api.get("genre/tv/list", {
-        params: { api_key: API_KEY, language: "pt-BR" },
-      });
-      setGeneros(data.genres);
-    } catch (error) {
-      console.error("Erro ao carregar gêneros:", error);
-    }
-  }, []);
-
-  const getMoviesWithLogos = useCallback(async () => {
-    const moviesWithLogos: Array<MediaResult & { logoPath: string }> = [];
-    const fetchMovies = generos.map(async (genero) => {
-      const movies = await fetchMedia(type, genero.id);
-      const filteredMovies = await Promise.all(
-        movies.map(async (movie) => {
-          if (movie.genre_ids?.length > 0 && movie.backdrop_path) {
-            const logos = await fetchMovieImages(movie.id, type);
-
-            const logoPath = getLogoByPriority(logos, [
-              "pt-Br",
-              "pt",
-              "en-US",
-              "en",
-            ]);
-            if (logoPath) {
-              return { ...movie, logoPath };
-            }
-          }
-          return null;
-        })
-      );
-      moviesWithLogos.push(
-        ...filteredMovies.filter(
-          (movie): movie is MediaResult & { logoPath: string } => movie !== null
-        )
-      );
-    });
-
-    await Promise.all(fetchMovies);
-    return moviesWithLogos;
-  }, [generos, type]);
-
-  useEffect(() => {
-    loadGeneros();
-  }, [loadGeneros]);
-
-  useEffect(() => {
-    const loadDestaque = async () => {
-      if (generos.length === 0) return;
-
-      try {
-        const filmesComLogoEGênero = await getMoviesWithLogos();
-        if (filmesComLogoEGênero.length > 0) {
-          const randomIndex = Math.floor(
-            Math.random() * filmesComLogoEGênero.length
-          );
-          const destaqueSelecionado = filmesComLogoEGênero[randomIndex];
-          setDestaque(destaqueSelecionado);
-          setLogoUrl(
-            `https://image.tmdb.org/t/p/w500${destaqueSelecionado.logoPath}`
-          );
-
-          const imageUrl = `https://image.tmdb.org/t/p/w500${destaqueSelecionado.backdrop_path}`;
-          const { data } = await axios.get(
-            `https://colorstrac.onrender.com/get-colors?imageUrl=${imageUrl}`
-          );
-          setCoresBackground(data.dominantColor);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar destaque:", error);
-      } finally {
-    
-      }
-    };
-
-    loadDestaque();
-  }, [getMoviesWithLogos]);
 
   const getGenreNames = useCallback(
     (genreIds: number[]): string =>
       genreIds
-        .map((id) => generos.find((genre) => genre.id === id)?.name)
+        .map((id) => generos.find((genre: any) => genre.id === id)?.name)
         .filter(Boolean)
         .join(" ° "),
     [generos]
@@ -236,10 +222,9 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
                 source={{
                   uri: `https://image.tmdb.org/t/p/original/${destaque.backdrop_path}`,
                 }}
-                cachePolicy={"disk"}
-                priority={'high'}
+                cachePolicy="memory"
+                priority={"high"}
               />
-
               <View style={{ width: width * 0.9 }}>
                 <Shadow
                   offset={[0, 170]}
@@ -249,11 +234,16 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
                 >
                   <View style={styles.containerButtonPrincipal}>
                     <View style={styles.vwImg}>
-                      {logoUrl ? (
+                      {destaque.logoPath ? (
                         <View style={{ alignItems: "center" }}>
                           <Image
-                            source={{ uri: logoUrl }}
+                            source={{
+                              uri: `https://image.tmdb.org/t/p/w500${destaque.logoPath}`,
+                            }}
                             cachePolicy="memory"
+                            placeholder={{
+                              uri: `https://image.tmdb.org/t/p/w300${destaque.logoPath}`,
+                            }}
                             style={styles.imgLogo}
                           />
                           <Text
@@ -276,7 +266,13 @@ const ImageDestaque = React.memo(({ type }: ImageDestaqueProps) => {
                         <Text style={styles.buttontext2}>Assistir</Text>
                       </View>
                       <TouchableOpacity
-                        onPress={() => router.push(destaque.name ? `/info?id=${destaque.id}` : `/infoFilmes?id=${destaque.id}`)}
+                        onPress={() =>
+                          router.push(
+                            destaque.name
+                              ? `/info?id=${destaque.id}`
+                              : `/infoFilmes?id=${destaque.id}`
+                          )
+                        }
                       >
                         <View style={styles.buttoninfo2}>
                           <Text style={styles.buttontext}>Informações</Text>
@@ -328,7 +324,7 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     height: 400,
     borderRadius: 10,
-   
+
     position: "absolute",
   },
   container4: {
@@ -437,6 +433,5 @@ const styles = StyleSheet.create({
     zIndex: 1,
     elevation: 10,
     transform: [{ translateY: -40 }],
- 
   },
 });

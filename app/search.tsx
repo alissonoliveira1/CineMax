@@ -10,7 +10,7 @@ import {
   FlatList,
 } from "react-native";
 import { Image } from "expo-image";
-import api from "../services";
+import api from "@/services";
 import HomeSearch from "@/components/HomeSearch";
 
 const { width } = Dimensions.get("window");
@@ -71,8 +71,8 @@ function Search() {
     <TouchableOpacity
       onPress={() =>
         item.type === "tv"
-          ? router.push(`/info?id=${item.id}`)
-          : router.push(`/infoFilmes?id=${item.id}`)
+          ? router.push(`/screens/info?id=${item.id}`)
+          : router.push(`/screens/infoFilmes?id=${item.id}`)
       }
       key={item.id}
     >

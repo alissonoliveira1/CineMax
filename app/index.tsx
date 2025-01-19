@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, memo } from "react";
-import { enableScreens } from 'react-native-screens';
+import { enableScreens } from "react-native-screens";
 import {
   Text,
   View,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Animated,
   TouchableOpacity,
-
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import Menu from "@/components/menu";
@@ -19,12 +18,12 @@ import CompFilmes from "@/components/CompFilmes";
 import CompSMFamilia from "@/components/CompSMFamilia";
 import AplashInicial from "@/components/SplashInicial";
 
-const Index = () => {
+const home = () => {
   const [loading, setLoading] = useState(true);
   const [opcao, setOpcao] = useState("inicio");
- 
+
   const scrollY = useRef(new Animated.Value(0)).current;
-  const lastScrollY = useRef(0); 
+  const lastScrollY = useRef(0);
   const [menuVisible, setMenuVisible] = useState(true);
 
   const scrollRoda = Animated.event(
@@ -34,14 +33,13 @@ const Index = () => {
       listener: (event: any) => {
         const currentScrollY = event.nativeEvent.contentOffset.y;
 
-    
         if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-          setMenuVisible(false); 
+          setMenuVisible(false);
         } else if (currentScrollY < lastScrollY.current) {
-          setMenuVisible(true); 
+          setMenuVisible(true);
         }
 
-        lastScrollY.current = currentScrollY; 
+        lastScrollY.current = currentScrollY;
       },
     }
   );
@@ -83,10 +81,10 @@ const Index = () => {
       </View>
     );
   return (
-    <SafeAreaView  style={styles.container2} >
-       <StatusBar hidden/>
+    <SafeAreaView style={styles.container2}>
+      <StatusBar translucent />
       <Header scrollY={scrollY} />
-     
+
       <ScrollView scrollEventThrottle={16} onScroll={scrollRoda}>
         <View style={styles.opcoesSerieFilme}>
           {options.map((option) => (
@@ -95,27 +93,29 @@ const Index = () => {
               onPress={() => setOpcao(option.value)}
               style={[
                 styles.viewFilmesSeries,
-                { borderColor: opcao === option.value ? '#ffffff' : '#747474' },
+                { borderColor: opcao === option.value ? "#ffffff" : "#747474" },
                 { borderWidth: opcao === option.value ? 2 : 1 },
               ]}
+            >
+              <Text
+                style={[
+                  styles.textoFilmesSeries,
+                  { color: opcao === option.value ? "#ffffff" : "#747474" }, // Aplicação dinâmica
+                ]}
               >
-              <Text style={[
-                styles.textoFilmesSeries,
-                { color: opcao === option.value ? '#ffffff' : '#747474' } // Aplicação dinâmica
-              ]}>{option.label}</Text>
-              
+                {option.label}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
         {renderContent()}
       </ScrollView>
-      <Menu page={'home'} isVisible={menuVisible}/>
+      <Menu page={"home"} isVisible={menuVisible} />
     </SafeAreaView>
   );
 };
-export default memo(Index);
+export default memo(home);
 const styles = StyleSheet.create({
-
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -133,7 +133,6 @@ const styles = StyleSheet.create({
     zIndex: 100,
     justifyContent: "space-evenly",
     marginTop: 90,
-   
   },
   textoFilmesSeries: {
     color: "#ffffff",
@@ -141,15 +140,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   viewFilmesSeries: {
-    
     borderColor: "#ffffff",
-    justifyContent:'center',
-    alignItems:'center',
-    paddingLeft:8,
-    paddingRight:8,
-    paddingTop:4,
-    paddingBottom:4,
-    borderWidth:1,
-    borderRadius:20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingLeft: 8,
+    paddingRight: 8,
+    paddingTop: 4,
+    paddingBottom: 4,
+    borderWidth: 1,
+    borderRadius: 20,
   },
 });
