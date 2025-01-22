@@ -3,8 +3,8 @@ import { useRouter } from "expo-router";
 import { View, TouchableOpacity } from "react-native";
 import { QueryClient, QueryClientProvider } from "react-query";
 import SearchIcon from "../assets/images/search.svg";
-import { MenuProvider } from "@/context/MenuContext"; // Importe o MenuProvider se necessário
-
+import { MenuProvider } from "@/context/MenuContext";
+import { RegisterProvider } from "@/context/RegisterContx";
 export default function RootLayout() {
   const router = useRouter();
   const queryClient = new QueryClient();
@@ -33,18 +33,16 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MenuProvider> {/* Se precisar do MenuProvider para acesso ao contexto */}
+      <RegisterProvider>
+      <MenuProvider>
         <Stack>
-          <Stack.Screen
-            name="index"
-            options={{ headerShown: false }}
-          />
+          <Stack.Screen name="loginHome" options={{ headerShown: false }} />
+
+          <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen
             name="cineFlash"
             options={{
               headerTitle: () => <Logo />,
-              statusBarStyle: "light",
-              statusBarBackgroundColor: "rgb(10, 17, 4)",
               headerShown: true,
               headerTintColor: "white",
               headerStyle: stileHeader,
@@ -64,7 +62,6 @@ export default function RootLayout() {
           <Stack.Screen
             name="VideoPlayer"
             options={{
-              statusBarHidden: false,
               headerShown: false,
             }}
           />
@@ -81,7 +78,6 @@ export default function RootLayout() {
           <Stack.Screen
             name="search"
             options={{
-              statusBarBackgroundColor: "rgb(5, 7, 32)",
               headerShown: false,
             }}
           />
@@ -95,8 +91,10 @@ export default function RootLayout() {
               headerTransparent: true,
             }}
           />
+          <Stack.Screen name="register" options={{ headerShown: false }} />
         </Stack>
       </MenuProvider>
+      </RegisterProvider>
     </QueryClientProvider>
   );
 }

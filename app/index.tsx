@@ -9,6 +9,7 @@ import {
   Animated,
   TouchableOpacity,
 } from "react-native";
+import { Redirect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import Menu from "@/components/menu";
 import Header from "@/components/header";
@@ -19,6 +20,7 @@ import CompSMFamilia from "@/components/CompSMFamilia";
 import AplashInicial from "@/components/SplashInicial";
 
 const home = () => {
+  return <Redirect href="/loginHome" />;
   const [loading, setLoading] = useState(true);
   const [opcao, setOpcao] = useState("inicio");
 
@@ -45,12 +47,14 @@ const home = () => {
   );
   useEffect(() => {
     const loadData = async () => {
+      
       await new Promise((resolve) => setTimeout(resolve, 3000));
       setLoading(false);
+      
     };
     loadData();
   }, []);
-
+  
   const options = [
     { label: "Inicio", value: "inicio" },
     { label: "Séries", value: "Séries" },
@@ -74,6 +78,8 @@ const home = () => {
   useEffect(() => {
     enableScreens();
   }, []);
+
+
   if (loading)
     return (
       <View style={styles.loadingContainer}>
@@ -82,7 +88,7 @@ const home = () => {
     );
   return (
     <SafeAreaView style={styles.container2}>
-      <StatusBar translucent />
+      <StatusBar  translucent />
       <Header scrollY={scrollY} />
 
       <ScrollView scrollEventThrottle={16} onScroll={scrollRoda}>
@@ -100,7 +106,7 @@ const home = () => {
               <Text
                 style={[
                   styles.textoFilmesSeries,
-                  { color: opcao === option.value ? "#ffffff" : "#747474" }, // Aplicação dinâmica
+                  { color: opcao === option.value ? "#ffffff" : "#747474" }, 
                 ]}
               >
                 {option.label}
@@ -125,7 +131,7 @@ const styles = StyleSheet.create({
 
   container2: {
     flex: 1,
-    backgroundColor: "rgb(10, 17, 4)",
+    backgroundColor: "#0a1104",
   },
 
   opcoesSerieFilme: {

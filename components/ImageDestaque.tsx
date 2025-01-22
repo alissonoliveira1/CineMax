@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {  useRef, useCallback } from "react";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Shadow } from "react-native-shadow-2";

@@ -70,9 +70,9 @@ function Search() {
   const renderItem = ({ item }: { item: TVShow }) => (
     <TouchableOpacity
       onPress={() =>
-        item.type === "tv"
-          ? router.push(`/screens/info?id=${item.id}`)
-          : router.push(`/screens/infoFilmes?id=${item.id}`)
+        item.name
+          ? router.push(`/info?id=${item.id}`)
+          : router.push(`/infoFilmes?id=${item.id}`)
       }
       key={item.id}
     >
@@ -99,7 +99,10 @@ function Search() {
       </View>
     </TouchableOpacity>
   );
+  console.log(search);
 
+
+  
   return (
     <View style={styles.container}>
       <View style={styles.viewInput}>
@@ -108,7 +111,7 @@ function Search() {
           placeholder="Encontre filmes e series"
           style={styles.inputText}
           value={search}
-          onChangeText={searchMovies} // Passa diretamente para o onChangeText
+          onChangeText={searchMovies} 
         />
       </View>
 

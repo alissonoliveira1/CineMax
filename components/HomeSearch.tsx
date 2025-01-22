@@ -2,7 +2,8 @@ import { FlatList, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import api from "@/services";
-
+import { TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
 interface TMDB {
   name: string;
   id: number;
@@ -10,6 +11,7 @@ interface TMDB {
 }
 
 const HomeSearch = () => {
+  const router = useRouter();
   const API_KEY = "9f4ef628222f7685f32fc1a8eecaae0b";
   const [movie, setMovie] = useState<TMDB[]>([]);
 
@@ -33,16 +35,24 @@ const HomeSearch = () => {
 
   const renderItem = ({ item }: { item: TMDB }) => {
     return (
-      <View style={styles.destaqueResults} key={item.id}>
+      <TouchableOpacity
+        onPress={() =>
+          item.name
+            ? router.push(`/info?id=${item.id}`)
+            : router.push(`/infoFilmes?id=${item.id}`)
+        }
+        style={styles.destaqueResults}
+        key={item.id}
+      >
         <Image
           style={styles.imageDestaque}
           source={{
             uri: `https://image.tmdb.org/t/p/original${item.poster_path}`,
           }}
-          cachePolicy={'memory'}// Utilizando cache mais eficiente
+          cachePolicy={"memory"} 
           contentFit="cover"
         />
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -54,7 +64,7 @@ const HomeSearch = () => {
         renderItem={renderItem}
         initialNumToRender={6}
         numColumns={2}
-        removeClippedSubviews={true} // Otimização de renderização
+        removeClippedSubviews={true} 
       />
     </View>
   );
