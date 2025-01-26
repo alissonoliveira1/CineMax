@@ -1,47 +1,94 @@
-import { useCallback, useEffect, useState } from "react";
-import { View, Image, Dimensions } from "react-native";
-import * as SplashScreen from "expo-splash-screen";
-const { width } = Dimensions.get("window");
+import React, { useEffect } from "react";
+import { View, StyleSheet, Dimensions } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSequence,
+  withDelay,
+  Easing,
+} from "react-native-reanimated";
+import { useRouter } from "expo-router";
 
-export default function AplashInicial() {
-  const [appIsReady, setAppIsReady] = useState(false);
+const { width, height } = Dimensions.get("window");
+
+export default function SplashCineMax() {
+  const router = useRouter();
+
+  // Valores animados
+  const textOpacity = useSharedValue(0);
+  const vignetteOpacity = useSharedValue(0);
+  const vignetteScale = useSharedValue(1);
 
   useEffect(() => {
-    async function prepare() {
-      try {
-        
-        await new Promise((resolve) => setTimeout(resolve, 5000)); 
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        setAppIsReady(true);
-      }
-    }
+    // Sequência de animações
+    textOpacity.value = withSequence(
+      withTiming(1.3, { duration: 1000, easing: Easing.out(Easing.exp) }), // Aparece
+      withDelay(1000, withTiming(0, { duration: 1000 })) // Desaparece
+    );
 
-    prepare();
+    vignetteOpacity.value = withDelay(
+      2000, // Tempo para a vinheta aparecer
+      withTiming(1, { duration: 500, easing: Easing.ease })
+    );
+
+    vignetteScale.value = withDelay(
+      2000,
+      withTiming(10, { duration: 1200, easing: Easing.inOut(Easing.ease) }) // Expande a vinheta
+    );
+
+    // Navegar para a próxima página após a animação
+    setTimeout(() => {
+      router.push("/"); // Substitua pelo caminho desejado
+    }, 3200);
   }, []);
 
-  const onLayoutRootView = useCallback(async () => {
-    if (appIsReady) {
-      await SplashScreen.hideAsync();
-    }
-  }, [appIsReady]);
+  // Estilos animados
+  const textStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value,
+    transform: [{ scale: textOpacity.value }],
+  }));
 
-  if (!appIsReady) {
-    return null;
-  }
+  const vignetteStyle = useAnimatedStyle(() => ({
+    opacity: vignetteOpacity.value,
+    transform: [{ scale: vignetteScale.value }],
+  }));
 
   return (
-    <View
-      style={{
-        backgroundColor: "#003174",
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-      onLayout={onLayoutRootView}
-    >
-      <Image style={{width:width}} resizeMode="contain" source={require("../assets/images/splash_logo.png")} />
+    <View style={styles.container}>
+      {/* Nome CineMax */}
+      <Animated.Image
+        source={require("@/assets/images/CineMaxTrans.png")}
+        style={[styles.text, textStyle]}
+        resizeMode="contain" // Garante que a imagem mantenha proporção
+      />
+
+      {/* Vinheta */}
+      <Animated.View style={[styles.vignette, vignetteStyle]} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#0a1104", // Fundo da tela principal
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  text: {
+    width: 250,
+    height: 250,
+    backgroundColor: "transparent", // Garante fundo transparente
+    position: "absolute",
+    zIndex: 10,
+  },
+  vignette: {
+    position: "absolute",
+    width: width - 200,
+    height: height - 450,
+    borderRadius: 9999,
+    backgroundColor: "#fff",
+    zIndex: 5,
+  },
+});

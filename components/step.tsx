@@ -5,25 +5,30 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-
 } from "react-native";
 import { useRegister } from "@/hooks/hookRegister";
-import { useRouter } from "expo-router";
-import { useState, useRef } from "react";
+import { useFocusEffect } from "expo-router";
+import { useState, useRef, useCallback } from "react";
+import { auth } from "@/firebaseConfig";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 const width = Dimensions.get("window").width;
-const height = Dimensions.get("window").height;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const Step1 = () => {
-  const router = useRouter();
-  const { conta } = useRegister();
-  const [contaInput, setContaInput] = useState<string | null>(conta);
+  const { conta, setPassos } = useRegister();
   const teclado = useRef<TextInput>(null);
-  const [changeText, setChangeText] = useState(conta);
-  const [changeText2, setChangeText2] = useState<string | null>(null);
+  const [changeText, setChangeText] = useState<{ email: string }>({
+    email: conta?.email || "",
+  });
+  const [changeText2, setChangeText2] = useState<string>("");
   const [active, setactive] = useState(false);
   const [validaremail, setValidarEmail] = useState<null | boolean>(null);
   const [numError, setNumError] = useState<number | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      setPassos(1);
+    }, [])
+  )
   const renderError = () => {
     switch (numError) {
       case 1: {
@@ -54,10 +59,10 @@ const Step1 = () => {
     }
   };
   const colorLine = (text: string) => {
-    setChangeText(text);
-
+    setChangeText({ email: text });
+  
     if (!active) return;
-
+  
     if (text === "") {
       setNumError(1);
       setValidarEmail(false);
@@ -72,9 +77,19 @@ const Step1 = () => {
       setValidarEmail(true);
     }
   };
-  const pressRegister = () => {
-    if (validaremail) {
-      router.push(`/register`);
+  const pressRegister = async () => {
+    if (!changeText.email || !emailRegex.test(changeText.email)) {
+      setValidarEmail(false);
+      setNumError(3);
+      return;
+    }
+  
+    try {
+      await createUserWithEmailAndPassword(auth, changeText.email, changeText2);
+      setPassos(2);
+    } catch (error) {
+      console.log("Algo deu errado ao se registrar", error);
+     
     }
   };
     return(
@@ -115,7 +130,7 @@ const Step1 = () => {
             <Text style={{ fontSize: 12, color: "#747474" }}>Email</Text>
             <TextInput
               ref={teclado}
-              value={changeText ?? ""}
+              value={changeText.email ? changeText.email : ""}
               onChangeText={colorLine}
               style={styles.input}
               placeholderTextColor={"#a7a7a7"}

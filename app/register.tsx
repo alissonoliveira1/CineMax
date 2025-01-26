@@ -4,11 +4,12 @@ import {
   Image,
   Dimensions
 } from "react-native";
+import { useRegister } from "@/hooks/hookRegister";
 const width = Dimensions.get("window").width;
 import Step1 from "@/components/step";
 import Step2 from "@/components/step2";
 const register = () => {
- 
+ const{passos} = useRegister();
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
       <View style={styles.containerHeader}>
@@ -19,8 +20,8 @@ const register = () => {
           />
         </View>
       </View>
-
-      <Step2/>
+{passos === 1 ? <Step1/> : <Step2/>}
+      
     </View>
   );
 };

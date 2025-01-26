@@ -8,21 +8,18 @@ import {
   TouchableOpacity,
   Animated,
   TextInput,
-
 } from "react-native";
 import { useRegister } from "@/hooks/hookRegister";
-
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import Exit from "../assets/images/exit.svg";
+import Exit from "../assets/icons/exit.svg";
+
 const width = Dimensions.get("window").width;
 const height = Dimensions.get("window").height;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-
-
 const LoginHome = () => {
-  const {setConta} = useRegister();
+  const { setConta } = useRegister();
   const router = useRouter();
   const [StateDots, setStateDots] = useState("0");
   const flatListRef = useRef<FlatList>(null);
@@ -33,7 +30,7 @@ const LoginHome = () => {
   const [active, setactive] = useState(false);
   const [validaremail, setValidarEmail] = useState<null | boolean>(null);
   const [numError, setNumError] = useState<number | null>(null);
- 
+
   const inicioAnima = () => {
     Animated.timing(translety, {
       toValue: isUp ? 0 : -height,
@@ -48,6 +45,7 @@ const LoginHome = () => {
       setIsUp(!isUp);
     });
   };
+
   const renderError = () => {
     switch (numError) {
       case 1: {
@@ -77,6 +75,7 @@ const LoginHome = () => {
         return null;
     }
   };
+
   const data = [
     {
       id: "1",
@@ -123,35 +122,31 @@ const LoginHome = () => {
   };
 
   const colorLine = (text: string) => {
-
     setChangeText(text);
-  
-    if (!active) return; 
-  
+    
+    if (!active) return;
+ 
     if (text === "") {
-      setNumError(1); 
+      setNumError(1);
       setValidarEmail(false);
     } else if (text.length <= 3) {
-      setNumError(2); 
+      setNumError(2);
       setValidarEmail(false);
     } else if (!emailRegex.test(text)) {
-      setNumError(3); 
+      setNumError(3);
       setValidarEmail(false);
     } else {
       setNumError(null);
       setValidarEmail(true);
- 
-    
-
+      
     }
   };
-  const pressRegister = () =>{
-
-    if(validaremail){
-      setConta(changeText)
-      router.push(`/register`)
+  const pressRegister = () => {
+    if (emailRegex.test(changeText)) {
+      setConta({ nome: "", email: changeText, perfil: "" });
+      router.push(`/register`);
     }
-  }
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -284,7 +279,7 @@ const LoginHome = () => {
                   ? { borderColor: "#a7a7a7" }
                   : validaremail === true
                   ? { borderColor: "green" }
-                  : { borderColor: "red" }
+                  : { borderColor: "red" },
               ]}
             >
               <Text style={{ fontSize: 12, color: "#747474" }}>Email</Text>
@@ -308,6 +303,19 @@ const LoginHome = () => {
                 <Text style={styles.buttonVamosLaText}>VAMOS LÁ</Text>
               </TouchableOpacity>
             </View>
+            <View style={{ marginTop: 20 }}>
+              <TouchableOpacity style={styles.buttonGoogle}>
+                <Image
+                  style={styles.imgGoogle}
+                  source={require("../assets/images/google.png")}
+                />
+                <Text
+                  style={{ color: "#6d6d6d", fontSize: 17, fontWeight: "bold" }}
+                >
+                  Entrar com o google
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Animated.View>
@@ -316,6 +324,22 @@ const LoginHome = () => {
 };
 
 const styles = StyleSheet.create({
+  imgGoogle: {
+    width: 30,
+    height: 30,
+    objectFit: "contain",
+  },
+  buttonGoogle: {
+    borderWidth: 1,
+    borderColor: "#a7a7a7",
+    borderRadius: 25,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    width: width - 60,
+    height: 50,
+    gap: 15,
+  },
   containerRegister: {
     position: "absolute",
     top: height,
@@ -333,6 +357,7 @@ const styles = StyleSheet.create({
     borderColor: "#a7a7a7",
     position: "relative",
     borderRadius: 5,
+
     borderWidth: 1,
     width: width - 60,
     height: 60,

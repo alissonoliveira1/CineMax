@@ -1,15 +1,6 @@
 import React, { useEffect, useState, useRef, memo } from "react";
 import { enableScreens } from "react-native-screens";
-import {
-  Text,
-  View,
-  ScrollView,
-  SafeAreaView,
-  StyleSheet,
-  Animated,
-  TouchableOpacity,
-} from "react-native";
-import { Redirect } from "expo-router";
+import { Text, View, ScrollView, SafeAreaView, StyleSheet, Animated, TouchableOpacity } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import Menu from "@/components/menu";
 import Header from "@/components/header";
@@ -18,49 +9,54 @@ import CompSeries from "@/components/CompSeries";
 import CompFilmes from "@/components/CompFilmes";
 import CompSMFamilia from "@/components/CompSMFamilia";
 import AplashInicial from "@/components/SplashInicial";
+import { useRouter } from "expo-router";
 
-const home = () => {
-  return <Redirect href="/loginHome" />;
+const Home = () => {
   const [loading, setLoading] = useState(true);
   const [opcao, setOpcao] = useState("inicio");
-
   const scrollY = useRef(new Animated.Value(0)).current;
   const lastScrollY = useRef(0);
   const [menuVisible, setMenuVisible] = useState(true);
+  const router = useRouter();
 
+  // Função de controle de scroll
   const scrollRoda = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
     {
       useNativeDriver: false,
       listener: (event: any) => {
         const currentScrollY = event.nativeEvent.contentOffset.y;
-
         if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
           setMenuVisible(false);
         } else if (currentScrollY < lastScrollY.current) {
           setMenuVisible(true);
         }
-
         lastScrollY.current = currentScrollY;
       },
     }
   );
+
+  // Carregar dados e navegação
   useEffect(() => {
     const loadData = async () => {
-      
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 3000)); // Simula o carregamento
       setLoading(false);
-      
     };
-    loadData();
-  }, []);
-  
+
+    loadData().then(() => {
+      router.push("/"); // Navega para a página principal
+    });
+
+    enableScreens(); // Otimizar a navegação com telas otimizadas
+  }, [router]);
+
   const options = [
     { label: "Inicio", value: "inicio" },
     { label: "Séries", value: "Séries" },
     { label: "Filmes", value: "Filmes" },
     { label: "Crianças & Família", value: "Familia" },
   ];
+
   const renderContent = () => {
     switch (opcao) {
       case "inicio":
@@ -75,22 +71,20 @@ const home = () => {
         return null;
     }
   };
-  useEffect(() => {
-    enableScreens();
-  }, []);
 
-
-  if (loading)
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
+        <StatusBar style="light" />
         <AplashInicial />
       </View>
     );
+  }
+
   return (
     <SafeAreaView style={styles.container2}>
-      <StatusBar  translucent />
+      <StatusBar translucent />
       <Header scrollY={scrollY} />
-
       <ScrollView scrollEventThrottle={16} onScroll={scrollRoda}>
         <View style={styles.opcoesSerieFilme}>
           {options.map((option) => (
@@ -106,7 +100,7 @@ const home = () => {
               <Text
                 style={[
                   styles.textoFilmesSeries,
-                  { color: opcao === option.value ? "#ffffff" : "#747474" }, 
+                  { color: opcao === option.value ? "#ffffff" : "#747474" },
                 ]}
               >
                 {option.label}
@@ -120,20 +114,20 @@ const home = () => {
     </SafeAreaView>
   );
 };
-export default memo(home);
+
+export default memo(Home);
+
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgb(5, 7, 32)",
+    backgroundColor: "#0a1104",
   },
-
   container2: {
     flex: 1,
     backgroundColor: "#0a1104",
   },
-
   opcoesSerieFilme: {
     flexDirection: "row",
     zIndex: 100,

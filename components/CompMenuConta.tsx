@@ -8,6 +8,8 @@ import {
   Animated,
   TouchableWithoutFeedback,
 } from "react-native";
+import { signOut } from "firebase/auth";
+import { auth } from "@/firebaseConfig";
 import { BlurView } from "expo-blur";
 import { useMenu } from "@/context/MenuContext";
 import Pencil from "../assets/images/pencil-fill.svg";
@@ -15,6 +17,7 @@ import Gear from "../assets/images/gear-wide.svg";
 import Arrow from "../assets/images/box-arrow-right.svg";
 import Question from "../assets/images/question-circle.svg";
 import User from "../assets/images/person-circle.svg";
+import { useRouter } from "expo-router";
 
 const width = Dimensions.get("window").width;
 const height = Dimensions.get("window").height;
@@ -24,7 +27,7 @@ const MenuConta = () => {
   const translateY = useRef(new Animated.Value(100)).current; 
   const blurOpacity = useRef(new Animated.Value(0)).current; 
   const [shouldRender, setShouldRender] = useState(isMenuVisible);
-
+  const router = useRouter();
  
   const animateMenu = (isVisible: boolean) => {
     Animated.parallel([
@@ -126,7 +129,7 @@ const MenuConta = () => {
               </View>
               <Text style={styles.text}>Ajuda</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.options}>
+            <TouchableOpacity onPress={() => signOut(auth).then(() => router.push('/loginHome'))} style={styles.options}>
               <View style={styles.ViewIcon}>
                 <Arrow color={"#ffffff"} width={"120%"} height={25} />
               </View>
