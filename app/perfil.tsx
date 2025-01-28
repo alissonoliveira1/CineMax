@@ -7,7 +7,10 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
+  Alert,
+  Easing 
 } from "react-native";
+
 import { useFocusEffect } from "expo-router";
 import { db } from "@/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
@@ -22,45 +25,48 @@ import Exit from "@/assets/icons/exit.svg";
 import { useRegister } from "@/hooks/hookRegister";
 import { useUser } from "@/hooks/hookUser";
 import EsclamationCircle from "@/assets/icons/exclamation-circle.svg";
+import HeaderWithButton from "@/components/bottonRota";
 const { width } = Dimensions.get("window");
 const height = Dimensions.get("window").height;
 const ITEM_SIZE = width * 0.5;
 const SPACING = (width - ITEM_SIZE) / 2;
 
-const Perfil = () => {
+const Perfil = () => {  
+  const { setConta} = useRegister();  
+  const { user, dadosUser } = useUser();
   const [avatars, setAvatars] = useState<{ url: string; name: string }[]>([]);
   const [blueLock, setblueLock] = useState<{ url: string; name: string }[]>([]);
   const [marvel, setMarvel] = useState<{ url: string; name: string }[]>([]);
-  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string >('https://i.ibb.co/pXcqy1M/Inserir-um-t-tulo.png');
-  const { setConta, conta } = useRegister();
-  const { user } = useUser();
-  const [name, setName] = useState<string>(user?.displayName || "");
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string>(String(dadosUser.photoURL) || 'https://i.ibb.co/pXcqy1M/Inserir-um-t-tulo.png');
+
+
+
+  const [name, setName] = useState<string>(String(dadosUser.displayName) === '' ? '' : String(dadosUser.displayName))
+  console.log('perfil', dadosUser.displayName)
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const [subiu, setSubiu] = useState(false);
   const altura = height - 70;
 
-  const perfilIcons = () => {
+  const perfilIcons = useCallback(() => {
     Animated.timing(scrollY, {
       toValue: subiu ? 0 : -altura,
-      duration: 500,
+      duration: 600,
+      easing: Easing.ease,
       useNativeDriver: true,
     }).start(() => {
       if (subiu) {
-        setConta((prevState) => ({
-          ...prevState,
-          perfil: currentAvatarUrl ,
-        }));
+        setConta((prevState) => ({ ...prevState, perfil: currentAvatarUrl }));
       }
       setSubiu(!subiu);
     });
-  };
+  }, [subiu, altura, currentAvatarUrl]);
 
   const getAvatars = useCallback(async () => {
     try {
       const docRef = doc(db, "cineUser", "avatar");
       const docSnap = await getDoc(docRef);
-
+  
       if (docSnap.exists()) {
         const data = docSnap.data();
         if (data.blueLock && Array.isArray(data.blueLock)) {
@@ -75,6 +81,7 @@ const Perfil = () => {
       }
     } catch (error) {
       console.error("Error fetching avatars:", error);
+      Alert.alert("Erro", "Houve um erro ao buscar os dados.");
     }
   }, []);
   useEffect(() => {
@@ -84,6 +91,19 @@ const Perfil = () => {
   const viewabilityConfig = {
     viewAreaCoveragePercentThreshold: 50,
   };
+
+  useEffect(() => {
+    if (dadosUser) {
+      if (!dadosUser.displayName || !dadosUser.photoURL) {
+        Alert.alert(
+          "Perfil Incompleto",
+          "Por favor, complete seu perfil adicionando um nome e uma foto.",
+          [{ text: "OK" }]
+        );
+      }
+    }
+  }, [dadosUser]);
+  
 
   const handleViewableItemsChanged = useRef(({ viewableItems }: any) => {
     if (viewableItems && viewableItems.length > 0) {
@@ -153,9 +173,13 @@ const Perfil = () => {
       </TouchableOpacity>
       <View
         style={{
-          width: width - 100,
+          width: width ,
           height: 60,
+          justifyContent: "center",
+          alignItems: "center",
           position: "relative",
+          flexDirection: "row",
+          gap:10
         }}
       >
         <TextInput
@@ -166,7 +190,7 @@ const Perfil = () => {
           placeholderTextColor={"#cecece"}
           placeholder="Nome do perfil"
           style={{
-            width: width - 100,
+            width: width - 140,
             height: 60,
             backgroundColor: "#222222ff",
             color: "white",
@@ -175,6 +199,7 @@ const Perfil = () => {
             borderRadius: 8,
           }}
         />
+        <HeaderWithButton/>
         {name === "" && (
           <>
           <View

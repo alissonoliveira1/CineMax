@@ -81,12 +81,7 @@ const MenuConta = () => {
       <View style={styles.container}>
     
         <Animated.View
-          style={[
-            styles.blurContainer,
-            {
-              opacity: blurOpacity,
-            },
-          ]}
+         
         >
           <BlurView
             intensity={10} 
@@ -105,7 +100,7 @@ const MenuConta = () => {
           ]}
         >
           <View style={styles.ContFilho}>
-            <TouchableOpacity style={styles.options}>
+            <TouchableOpacity onPress={() => router.push('/perfil')} style={styles.options}>
               <View style={styles.ViewIcon}>
                 <Pencil color={"#ffffff"} width={"100%"} height={25} />
               </View>

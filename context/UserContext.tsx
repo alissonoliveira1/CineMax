@@ -2,64 +2,65 @@ import { createContext, useEffect, useState } from "react";
 import { auth } from "@/firebaseConfig";
 import { useMemo } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { updateProfile } from "firebase/auth";
-import { useRegister } from "@/hooks/hookRegister";
+import { db } from "@/firebaseConfig";
 
+import { getDoc, doc } from "firebase/firestore";
 interface UserContextType {
-    user: User | null;
-  }
+  user: User | null;
+  dadosUser: { photoURL: String; displayName: String };
+}
 
+export const UserContext = createContext<UserContextType | undefined>(
+  undefined
+);
 
-export const UserContext = createContext<UserContextType | undefined>(undefined);
+export const UserProvider = ({ children }: any) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [dadosUser, setDadosUser] = useState<{
+    photoURL: string;
+    displayName: string;
+  }>({ photoURL: "", displayName: "" });
+  let email: string | null = null;
+  let emailVerified: boolean | null = null;
+  let uid: string | null = null;
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        setUser(null);
+      }
+    });
 
-export const UserProvider = ({ children }:any) => {
-    const {conta} = useRegister();
-    const [user, setUser] = useState<User | null>(null);
-    let email: string | null = null;
-    let emailVerified: boolean | null = null;
-    let uid: string | null = null;
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          if (currentUser) {
-            setUser(currentUser);
+    return () => unsubscribe();
+  }, []);
+  useEffect(() => {
+    if (user?.uid) {
+      const refDoc = doc(db, "cineData", user.uid);
+
+      getDoc(refDoc)
+        .then((docSnap) => {
+          if (docSnap.exists()) {
+            setDadosUser(
+              docSnap.data() as { photoURL: string; displayName: string }
+            );
           } else {
-            setUser(null);
+            console.log("Documento não encontrado!");
           }
+        })
+        .catch((error) => {
+          console.error("Erro ao buscar o documento:", error);
         });
-        
-        return () => unsubscribe(); 
-      }, []);
-    
-    if(user){
-        updateProfile(user, {
-            displayName: conta.nome,
-            photoURL: conta.perfil
-          }).then(() => {
-            console.log("Profile updated");
-          }).catch((error:any) => {
-            console.log("erro ao atualizar perfil:", error);
-          }); 
-       }
+    } else {
+      console.log("Usuário não está autenticado ou UID não encontrado.");
+    }
+  }, [user]);
 
-   if(user){
-    emailVerified = user.emailVerified;
-    email = user.email;
-    uid = user.uid;
-   }
-   if(user){
-    user.providerData.forEach((profile:any) => {
-        console.log("Sign-in provider: " + profile.providerId);
-        console.log("  Provider-specific UID: " + profile.uid);
-        console.log("  Name: " + profile.displayName);
-        console.log("  Email: " + profile.email);
-        console.log("  Photo URL: " + profile.photoURL);
-      });
-   }
-    const contextValue = useMemo(() => ({ user, email }), [user, email, emailVerified, uid]);
+  console.log("Dados do documento:", dadosUser.photoURL, dadosUser.displayName);
 
-    return(
-        <UserContext.Provider value={contextValue}>
-            {children}
-        </UserContext.Provider>
-    )
-}   
+  const contextValue = useMemo(() => ({ user, dadosUser }), [user, dadosUser]);
+
+  return (
+    <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
+  );
+};

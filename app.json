@@ -21,7 +21,7 @@
       "newArchEnabled": true,
       "jsEngine": "hermes",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/CineMaxTrans.png",
+        "foregroundImage": "./assets/images/iconGreen.png",
         "backgroundColor": "#0a1104"
       },
       "package": "com.alissonoliveira1.CineMax"

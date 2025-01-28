@@ -8,17 +8,21 @@ import Animated, {
   withDelay,
   Easing,
 } from "react-native-reanimated";
+import { auth } from "../firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
+import { useUser } from "@/hooks/hookUser";
 import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
 export default function SplashCineMax() {
   const router = useRouter();
-
-  // Valores animados
+  const { user, dadosUser } = useUser();
   const textOpacity = useSharedValue(0);
   const vignetteOpacity = useSharedValue(0);
   const vignetteScale = useSharedValue(1);
+
+  
 
   useEffect(() => {
     // Sequência de animações
@@ -36,12 +40,24 @@ export default function SplashCineMax() {
       2000,
       withTiming(10, { duration: 1200, easing: Easing.inOut(Easing.ease) }) // Expande a vinheta
     );
-
-    // Navegar para a próxima página após a animação
-    setTimeout(() => {
-      router.push("/"); // Substitua pelo caminho desejado
-    }, 3200);
   }, []);
+
+  useEffect(() => {
+    // Navegação após carregamento do estado do usuário
+    const timer = setTimeout(() => {
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          router.push("/loginHome");
+        } else if (dadosUser?.photoURL?.trim()) {
+          router.push("/");
+        } else {
+          router.push("/perfil");
+        }
+      })
+    }, 3200); // Espera o tempo necessário para as animações terminarem
+
+    return () => clearTimeout(timer); // Evita vazamentos de memória
+  }, [ dadosUser, router]);
 
   // Estilos animados
   const textStyle = useAnimatedStyle(() => ({

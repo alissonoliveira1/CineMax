@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { useRouter } from "expo-router";
+import HeaderWithButton from "@/components/bottonRota";
 import { View, TouchableOpacity, Text } from "react-native";
 import { QueryClient, QueryClientProvider } from "react-query";
 import SearchIcon from "../assets/images/search.svg";
@@ -9,7 +10,7 @@ import { UserProvider } from "@/context/UserContext";
 import { auth } from "@/firebaseConfig";
 export default function RootLayout() {
   const router = useRouter();
- const user = auth.currentUser;
+  const user = auth.currentUser;
   const queryClient = new QueryClient();
 
   const Logo = () => {
@@ -38,82 +39,77 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <RegisterProvider>
         <UserProvider>
-        <MenuProvider>
-          <Stack>
-            <Stack.Screen name="loginHome" options={{ headerShown: false }} />
+          <MenuProvider>
+            <Stack>
+              <Stack.Screen name="loginHome" options={{ headerShown: false }} />
 
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="cineFlash"
-              options={{
-                headerTitle: () => <Logo />,
-                headerShown: true,
-                headerTintColor: "white",
-                headerStyle: stileHeader,
-                headerTransparent: true,
-              }}
-            />
-            <Stack.Screen
-              name="info"
-              options={{
-                headerTitle: () => <Logo />,
-                headerShown: true,
-                headerTintColor: "white",
-                headerStyle: stileHeader,
-                headerTransparent: true,
-              }}
-            />
-            <Stack.Screen
-              name="VideoPlayer"
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="favoritos"
-              options={{
-                headerTitle: () => <Logo />,
-                headerShown: true,
-                headerTintColor: "white",
-                headerStyle: stileHeader,
-                headerTransparent: true,
-              }}
-            />
-            <Stack.Screen
-              name="search"
-              options={{
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="infoFilmes"
-              options={{
-                headerTitle: () => <Logo />,
-                headerShown: true,
-                headerTintColor: "white",
-                headerStyle: stileHeader,
-                headerTransparent: true,
-              }}
-            />
-            <Stack.Screen name="perfil" options={{ headerShown: true, title:'Editar perfil', headerTransparent:true,headerTintColor:'#c2c0c0', headerTitleStyle:{fontWeight:'700', fontSize:22},headerRight:() =>(
-              <TouchableOpacity
-              onPress={() => user?.displayName !== '' ? router.push(`/`): ''}  
-              style={{
-                width: 60,
-                padding: 10,
-                backgroundColor: "#025c0e",
-                borderRadius: 5,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ color: "#fff", fontWeight:"bold" }}>Criar</Text>
-            </TouchableOpacity>
-            )}} />
-            <Stack.Screen name="register" options={{ headerShown: false }}  />
-            
-          </Stack>
-        </MenuProvider>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="cineFlash"
+                options={{
+                  headerTitle: () => <Logo />,
+                  headerShown: true,
+                  headerTintColor: "white",
+                  headerStyle: stileHeader,
+                  headerTransparent: true,
+                }}
+              />
+              <Stack.Screen
+                name="info"
+                options={{
+                  headerTitle: () => <Logo />,
+                  headerShown: true,
+                  headerTintColor: "white",
+                  headerStyle: stileHeader,
+                  headerTransparent: true,
+                }}
+              />
+              <Stack.Screen
+                name="VideoPlayer"
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="favoritos"
+                options={{
+                  headerTitle: () => <Logo />,
+                  headerShown: true,
+                  headerTintColor: "white",
+                  headerStyle: stileHeader,
+                  headerTransparent: true,
+                }}
+              />
+              <Stack.Screen
+                name="search"
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="infoFilmes"
+                options={{
+                  headerTitle: () => <Logo />,
+                  headerShown: true,
+                  headerTintColor: "white",
+                  headerStyle: stileHeader,
+                  headerTransparent: true,
+                }}
+              />
+              <Stack.Screen
+                name="perfil"
+                options={{
+                  headerShown: true,
+                  title: "Editar perfil",
+                  headerTransparent: true,
+                  headerTintColor: "#c2c0c0",
+                  headerTitleStyle: { fontWeight: "700", fontSize: 22 },
+              
+                }}
+              />
+              <Stack.Screen name="register" options={{ headerShown: false }} />
+            </Stack>
+          </MenuProvider>
         </UserProvider>
       </RegisterProvider>
     </QueryClientProvider>
