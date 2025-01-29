@@ -8,9 +8,8 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Easing 
+  Easing,
 } from "react-native";
-
 import { useFocusEffect } from "expo-router";
 import { db } from "@/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
@@ -29,24 +28,31 @@ import HeaderWithButton from "@/components/bottonRota";
 const { width } = Dimensions.get("window");
 const height = Dimensions.get("window").height;
 const ITEM_SIZE = width * 0.5;
-const SPACING = (width - ITEM_SIZE) / 2;
 
-const Perfil = () => {  
-  const { setConta} = useRegister();  
+
+const Perfil = () => {
+  const { setConta } = useRegister();
   const { user, dadosUser } = useUser();
-  const [avatars, setAvatars] = useState<{ url: string; name: string }[]>([]);
-  const [blueLock, setblueLock] = useState<{ url: string; name: string }[]>([]);
-  const [marvel, setMarvel] = useState<{ url: string; name: string }[]>([]);
-  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string>(String(dadosUser.photoURL) || 'https://i.ibb.co/pXcqy1M/Inserir-um-t-tulo.png');
-
-
-
-  const [name, setName] = useState<string>(String(dadosUser.displayName) === '' ? '' : String(dadosUser.displayName))
-  console.log('perfil', dadosUser.displayName)
-  const scrollX = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const [subiu, setSubiu] = useState(false);
   const altura = height - 70;
+  const [avatars, setAvatars] = useState<{ url: string; name: string }[]>([]);
+  const [blueLock, setblueLock] = useState<{ url: string; name: string }[]>([]);
+  const [marvel, setMarvel] = useState<{ url: string; name: string }[]>([]);
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string>("");
+  const [name, setName] = useState<string>("");
+  useEffect(() => {
+    if (dadosUser) {
+      setCurrentAvatarUrl(
+        dadosUser.photoURL
+          ? String(dadosUser.photoURL)
+          : "https://i.ibb.co/pXcqy1M/Inserir-um-t-tulo.png"
+      );
+  
+      setName(dadosUser.displayName ? String(dadosUser.displayName) : "Usuário Anônimo");
+    }
+  }, [dadosUser]);
+console.log('dados no perfil',dadosUser.displayName,dadosUser.photoURL)
 
   const perfilIcons = useCallback(() => {
     Animated.timing(scrollY, {
@@ -56,7 +62,7 @@ const Perfil = () => {
       useNativeDriver: true,
     }).start(() => {
       if (subiu) {
-        setConta((prevState) => ({ ...prevState, perfil: currentAvatarUrl }));
+        
       }
       setSubiu(!subiu);
     });
@@ -66,31 +72,25 @@ const Perfil = () => {
     try {
       const docRef = doc(db, "cineUser", "avatar");
       const docSnap = await getDoc(docRef);
-  
       if (docSnap.exists()) {
         const data = docSnap.data();
-        if (data.blueLock && Array.isArray(data.blueLock)) {
+        if (data.icons) {
           setAvatars(data.icons);
           setblueLock(data.blueLock);
           setMarvel(data.marvel);
         } else {
-          console.log("No icons array found in the document!");
+          console.log("No icons array found!");
         }
-      } else {
-        console.log("No such document!");
       }
     } catch (error) {
       console.error("Error fetching avatars:", error);
       Alert.alert("Erro", "Houve um erro ao buscar os dados.");
     }
   }, []);
+
   useEffect(() => {
     getAvatars();
   }, [getAvatars]);
-
-  const viewabilityConfig = {
-    viewAreaCoveragePercentThreshold: 50,
-  };
 
   useEffect(() => {
     if (dadosUser) {
@@ -103,52 +103,30 @@ const Perfil = () => {
       }
     }
   }, [dadosUser]);
-  
-
-  const handleViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    if (viewableItems && viewableItems.length > 0) {
-      const visibleItem = viewableItems[0];
-      if (visibleItem && visibleItem.item.url !== currentAvatarUrl) {
-        setCurrentAvatarUrl(visibleItem.item.url);
-      }
-    }
-  }).current;
-
-  const renderItem = ({ item, index }: any) => {
-    const inputRange = [
-      (index - 1) * ITEM_SIZE,
-      index * ITEM_SIZE,
-      (index + 1) * ITEM_SIZE,
-    ];
-
-    const scale = scrollX.interpolate({
-      inputRange,
-      outputRange: [0.8, 1, 0.8],
-      extrapolate: "clamp",
-    });
-
+const selectIcon = (e:any) =>{
+  setCurrentAvatarUrl(e);
+  setConta((prevState) => ({ ...prevState, perfil: e }));
+}
+  const renderItem = ({ item }: any) => {
     return (
-      <View style={{ width: ITEM_SIZE, alignItems: "center" }}>
-        <Animated.Image
-          source={{ uri: item.url }}
-          style={[
-            styles.image,
-            {
-              transform: [{ scale }],
-            },
-          ]}
-        />
-      </View>
+      <TouchableOpacity onPress={()=>selectIcon(item.url)} style={{ width: ITEM_SIZE, alignItems: "center" }}>
+        <Animated.Image source={{ uri: item.url }} style={styles.image} />
+      </TouchableOpacity>
     );
   };
+
+
+
+
+
   const setandoNome = (e: any) => {
     setName(e);
   };
   const focosname = () => {
     if (name === "") return;
-
     setConta((prevState) => ({ ...prevState, nome: name }));
   };
+
   useFocusEffect(
     useCallback(() => {
       setSubiu(false);
@@ -162,9 +140,7 @@ const Perfil = () => {
           style={styles.imgSelect}
           source={{
             uri:
-              user?.photoURL === ""
-                ? currentAvatarUrl
-                : user?.photoURL || currentAvatarUrl,
+              currentAvatarUrl,
           }}
         />
         <View style={styles.containerIconPencel}>
@@ -173,13 +149,13 @@ const Perfil = () => {
       </TouchableOpacity>
       <View
         style={{
-          width: width ,
+          width: width,
           height: 60,
           justifyContent: "center",
           alignItems: "center",
           position: "relative",
           flexDirection: "row",
-          gap:10
+          gap: 10,
         }}
       >
         <TextInput
@@ -199,78 +175,78 @@ const Perfil = () => {
             borderRadius: 8,
           }}
         />
-        <HeaderWithButton/>
+        <HeaderWithButton />
         {name === "" && (
           <>
-          <View
-          style={{
-            width: 40,
-            height: 60,
-            position: "absolute",
-            right: 10,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <EsclamationCircle width={20} height={20} color={"red"} />
-        </View>
-        <View
-          style={{
-            position: "absolute",
-            bottom: 5,
-            right: 25,
-            borderBottomColor: "red",
-            width: 10,
-            height: 10,
-            borderLeftWidth: 5,
-            borderRightWidth: 5,
-            borderBottomWidth: 8,
-            borderLeftColor: "transparent",
-            borderRightColor: "transparent",
-          }}
-        ></View>
-        <View
-          style={{
-            zIndex: 100,
-            position: "absolute",
-            width: 130,
-            height: 30,
-            top: 54,
-            right: 0,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "white",
-          }}
-        >
-          <View style={{
-            width: 130,
-            height: 30,
-            position: "relative",
-            paddingTop: 5,
-            justifyContent: "center",
-            alignItems: "center",
-            }}>
-            <View style={{ 
-              width: 130,
-              height:5,
-              backgroundColor:'red',
-              position: "absolute",
-              top: 0,
-              
-              }}></View>
-          <Text
-            style={{
-              color: "black",
-              fontSize: 13,
-             
-           
-             
-            }}
-          >
-            informe um Nome.
-          </Text>
-          </View>
-        </View>
+            <View
+              style={{
+                width: 40,
+                height: 60,
+                position: "absolute",
+                right: 10,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <EsclamationCircle width={20} height={20} color={"red"} />
+            </View>
+            <View
+              style={{
+                position: "absolute",
+                bottom: 5,
+                right: 25,
+                borderBottomColor: "red",
+                width: 10,
+                height: 10,
+                borderLeftWidth: 5,
+                borderRightWidth: 5,
+                borderBottomWidth: 8,
+                borderLeftColor: "transparent",
+                borderRightColor: "transparent",
+              }}
+            ></View>
+            <View
+              style={{
+                zIndex: 100,
+                position: "absolute",
+                width: 130,
+                height: 30,
+                top: 54,
+                right: 0,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "white",
+              }}
+            >
+              <View
+                style={{
+                  width: 130,
+                  height: 30,
+                  position: "relative",
+                  paddingTop: 5,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <View
+                  style={{
+                    width: 130,
+                    height: 5,
+                    backgroundColor: "red",
+                    position: "absolute",
+                    top: 0,
+                  }}
+                ></View>
+                <Text
+                  style={{
+                    color: "black",
+                    fontSize: 13,
+                  }}
+                >
+                  informe um Nome.
+                </Text>
+              </View>
+            </View>
           </>
         )}
       </View>
@@ -444,7 +420,7 @@ const Perfil = () => {
           <Text style={styles.textIconsSelect}>Animes</Text>
           <Animated.FlatList
             data={avatars}
-            keyExtractor={(item, index) => index.toString()}
+              keyExtractor={(item) => item.url}
             renderItem={renderItem}
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -452,22 +428,13 @@ const Perfil = () => {
             decelerationRate="fast"
             bounces={false}
             style={{ flexGrow: 0 }}
-            contentContainerStyle={{
-              paddingHorizontal: SPACING,
-            }}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: false }
-            )}
-            onViewableItemsChanged={handleViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
           />
         </View>
         <View style={{ flex: 1, marginTop: 20 }}>
           <Text style={styles.textIconsSelect}>Blue lock</Text>
           <Animated.FlatList
             data={blueLock}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(item) => item.url}
             renderItem={renderItem}
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -475,38 +442,21 @@ const Perfil = () => {
             decelerationRate="fast"
             bounces={false}
             style={{ flexGrow: 0 }}
-            contentContainerStyle={{
-              paddingHorizontal: SPACING,
-            }}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: false }
-            )}
-            onViewableItemsChanged={handleViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
           />
         </View>
         <View style={{ flex: 1, marginTop: 20, marginBottom: 10 }}>
           <Text style={styles.textIconsSelect}>Marvel</Text>
           <Animated.FlatList
             data={marvel}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(item) => item.url}
             renderItem={renderItem}
             horizontal
+
             showsHorizontalScrollIndicator={false}
             snapToInterval={ITEM_SIZE}
             decelerationRate="fast"
             bounces={false}
             style={{ flexGrow: 0 }}
-            contentContainerStyle={{
-              paddingHorizontal: SPACING,
-            }}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: false }
-            )}
-            onViewableItemsChanged={handleViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
           />
         </View>
       </Animated.View>

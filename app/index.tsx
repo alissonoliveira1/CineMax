@@ -1,153 +1,108 @@
-import React, { useEffect, useState, useRef, memo } from "react";
-import { enableScreens } from "react-native-screens";
-import { Text, View, ScrollView, SafeAreaView, StyleSheet, Animated, TouchableOpacity } from "react-native";
-import { StatusBar } from "expo-status-bar";
-import Menu from "@/components/menu";
-import Header from "@/components/header";
-import CompHome from "@/components/CompHome";
-import CompSeries from "@/components/CompSeries";
-import CompFilmes from "@/components/CompFilmes";
-import CompSMFamilia from "@/components/CompSMFamilia";
-import AplashInicial from "@/components/SplashInicial";
+import { auth } from "@/firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
+import { useEffect } from "react";
 import { useRouter } from "expo-router";
+import { useUser } from "@/hooks/hookUser";
+import { View, StyleSheet, Dimensions } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSequence,
+  withDelay,
+  Easing,
+} from "react-native-reanimated";
 
-const Home = () => {
-  const [loading, setLoading] = useState(true);
-  const [opcao, setOpcao] = useState("inicio");
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const lastScrollY = useRef(0);
-  const [menuVisible, setMenuVisible] = useState(true);
+const { width, height } = Dimensions.get("window");
+export default function Index() {  
+  const { dadosUser } = useUser();
   const router = useRouter();
+  const textOpacity = useSharedValue(0);
+  const vignetteOpacity = useSharedValue(0);
+  const vignetteScale = useSharedValue(1);
 
-  // Função de controle de scroll
-  const scrollRoda = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    {
-      useNativeDriver: false,
-      listener: (event: any) => {
-        const currentScrollY = event.nativeEvent.contentOffset.y;
-        if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-          setMenuVisible(false);
-        } else if (currentScrollY < lastScrollY.current) {
-          setMenuVisible(true);
-        }
-        lastScrollY.current = currentScrollY;
-      },
-    }
-  );
+useEffect(() => {
+    // Sequência de animações
+    textOpacity.value = withSequence(
+      withTiming(1.3, { duration: 1000, easing: Easing.out(Easing.exp) }), // Aparece
+      withDelay(1000, withTiming(0, { duration: 1000 })) // Desaparece
+    );
 
-  // Carregar dados e navegação
-  useEffect(() => {
-    const loadData = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 3000)); // Simula o carregamento
-      setLoading(false);
-    };
+    vignetteOpacity.value = withDelay(
+      2000, // Tempo para a vinheta aparecer
+      withTiming(1, { duration: 500, easing: Easing.ease })
+    );
 
-    loadData().then(() => {
-      router.push("/"); // Navega para a página principal
-    });
+    vignetteScale.value = withDelay(
+      2000,
+      withTiming(10, { duration: 1200, easing: Easing.inOut(Easing.ease) }) // Expande a vinheta
+    );
+  }, []);
 
-    enableScreens(); // Otimizar a navegação com telas otimizadas
-  }, [router]);
+    useEffect(() => {
+      // Navegação após carregamento do estado do usuário
+      const timer = setTimeout(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (!user) {
+            router.replace("/loginHome",);
+          }  else {
+            router.replace("/home");
+          }
+        });
+        return () => unsubscribe();
+      }, 3200); // Espera o tempo necessário para as animações terminarem
+  
+      return () => clearTimeout(timer); // Evita vazamentos de memória
+    }, [ dadosUser, router]);
+  
+ const textStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value,
+    transform: [{ scale: textOpacity.value }],
+  }));
 
-  const options = [
-    { label: "Inicio", value: "inicio" },
-    { label: "Séries", value: "Séries" },
-    { label: "Filmes", value: "Filmes" },
-    { label: "Crianças & Família", value: "Familia" },
-  ];
+  const vignetteStyle = useAnimatedStyle(() => ({
+    opacity: vignetteOpacity.value,
+    transform: [{ scale: vignetteScale.value }],
+  }));
 
-  const renderContent = () => {
-    switch (opcao) {
-      case "inicio":
-        return <CompHome />;
-      case "Filmes":
-        return <CompFilmes />;
-      case "Séries":
-        return <CompSeries />;
-      case "Familia":
-        return <CompSMFamilia />;
-      default:
-        return null;
-    }
-  };
-
-  if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <StatusBar style="light" />
-        <AplashInicial />
+      <View style={styles.container}>
+        {/* Nome CineMax */}
+        <Animated.Image
+          source={require("@/assets/images/CineMaxTrans.png")}
+          style={[styles.text, textStyle]}
+          resizeMode="contain" // Garante que a imagem mantenha proporção
+        />
+  
+        {/* Vinheta */}
+        <Animated.View style={[styles.vignette, vignetteStyle]} />
       </View>
     );
   }
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: "#0a1104", // Fundo da tela principal
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    text: {
+      width: 250,
+      height: 250,
+      backgroundColor: "transparent", // Garante fundo transparente
+      position: "absolute",
+      zIndex: 10,
+    },
+    vignette: {
+      position: "absolute",
+      width: width - 200,
+      height: height - 450,
+      borderRadius: 9999,
+      backgroundColor: "#fff",
+      zIndex: 5,
+    },
+  });
+  
 
-  return (
-    <SafeAreaView style={styles.container2}>
-      <StatusBar translucent />
-      <Header scrollY={scrollY} />
-      <ScrollView scrollEventThrottle={16} onScroll={scrollRoda}>
-        <View style={styles.opcoesSerieFilme}>
-          {options.map((option) => (
-            <TouchableOpacity
-              key={option.value}
-              onPress={() => setOpcao(option.value)}
-              style={[
-                styles.viewFilmesSeries,
-                { borderColor: opcao === option.value ? "#ffffff" : "#747474" },
-                { borderWidth: opcao === option.value ? 2 : 1 },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.textoFilmesSeries,
-                  { color: opcao === option.value ? "#ffffff" : "#747474" },
-                ]}
-              >
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        {renderContent()}
-      </ScrollView>
-      <Menu page={"home"} isVisible={menuVisible} />
-    </SafeAreaView>
-  );
-};
 
-export default memo(Home);
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#0a1104",
-  },
-  container2: {
-    flex: 1,
-    backgroundColor: "#0a1104",
-  },
-  opcoesSerieFilme: {
-    flexDirection: "row",
-    zIndex: 100,
-    justifyContent: "space-evenly",
-    marginTop: 90,
-  },
-  textoFilmesSeries: {
-    color: "#ffffff",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  viewFilmesSeries: {
-    borderColor: "#ffffff",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingLeft: 8,
-    paddingRight: 8,
-    paddingTop: 4,
-    paddingBottom: 4,
-    borderWidth: 1,
-    borderRadius: 20,
-  },
-});

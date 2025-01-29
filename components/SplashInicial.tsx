@@ -45,15 +45,7 @@ export default function SplashCineMax() {
   useEffect(() => {
     // Navegação após carregamento do estado do usuário
     const timer = setTimeout(() => {
-      onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          router.push("/loginHome");
-        } else if (dadosUser?.photoURL?.trim()) {
-          router.push("/");
-        } else {
-          router.push("/perfil");
-        }
-      })
+      
     }, 3200); // Espera o tempo necessário para as animações terminarem
 
     return () => clearTimeout(timer); // Evita vazamentos de memória
