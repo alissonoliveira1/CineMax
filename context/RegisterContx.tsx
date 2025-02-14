@@ -2,7 +2,6 @@ import React, { createContext, useState, useMemo, Dispatch, SetStateAction, useE
 import { addDoc,collection,doc, setDoc } from "firebase/firestore";
 import { auth } from "@/firebaseConfig";
 import { db } from "@/firebaseConfig";
-import { useUser } from "@/hooks/hookUser";
 type User = {
   nome: string;
   email: string;
@@ -28,7 +27,7 @@ export const RegisterProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [conta, setConta] = useState<User>({
     nome: "",
     email: "",
-    perfil: "",
+    perfil: "https://i.ibb.co/pXcqy1M/Inserir-um-t-tulo.png",
   });
 
   useEffect(() => {

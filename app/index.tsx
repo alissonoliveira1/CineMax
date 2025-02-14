@@ -12,7 +12,7 @@ import Animated, {
   withDelay,
   Easing,
 } from "react-native-reanimated";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const { width, height } = Dimensions.get("window");
 export default function Index() {  
   const { dadosUser } = useUser();
@@ -38,15 +38,19 @@ useEffect(() => {
       withTiming(10, { duration: 1200, easing: Easing.inOut(Easing.ease) }) // Expande a vinheta
     );
   }, []);
-
+ 
     useEffect(() => {
-      // Navegação após carregamento do estado do usuário
+     
+
       const timer = setTimeout(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
           if (!user) {
             router.replace("/loginHome",);
           }  else {
-            router.replace("/home");
+            console.log("Usuário autenticadobabaca:", user.uid);
+        
+            AsyncStorage.setItem('UserID', JSON.stringify(user.uid)); 
+            router.replace("/perfilHome");
           }
         });
         return () => unsubscribe();

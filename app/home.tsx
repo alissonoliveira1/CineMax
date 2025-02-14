@@ -9,15 +9,15 @@ import CompSeries from "@/components/CompSeries";
 import CompFilmes from "@/components/CompFilmes";
 import CompSMFamilia from "@/components/CompSMFamilia";
 
-import { useRouter } from "expo-router";
+import MenuConta from "@/components/CompMenuConta";
+
 
 const Home = () => {
- 
-  const [opcao, setOpcao] = useState("inicio");
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const lastScrollY = useRef(0);
-  const [menuVisible, setMenuVisible] = useState(true);
-  const scrollRoda = Animated.event(
+const scrollY = useRef(new Animated.Value(0)).current;
+const lastScrollY = useRef(0);
+const [opcao, setOpcao] = useState("inicio");
+const [menuVisible, setMenuVisible] = useState(true);
+const scrollRoda = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
     {
       useNativeDriver: false,
@@ -59,7 +59,7 @@ const Home = () => {
     <SafeAreaView style={styles.container2}>
       <StatusBar translucent />
       <Header scrollY={scrollY} />
-      <ScrollView scrollEventThrottle={16} onScroll={scrollRoda}>
+      <ScrollView  onScroll={scrollRoda}>
         <View style={styles.opcoesSerieFilme}>
           {options.map((option) => (
             <TouchableOpacity
@@ -85,6 +85,7 @@ const Home = () => {
         {renderContent()}
       </ScrollView>
       <Menu page={"home"} isVisible={menuVisible} />
+      <MenuConta />
     </SafeAreaView>
   );
 };

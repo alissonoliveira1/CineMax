@@ -8,31 +8,36 @@ import {
 import { useRouter } from "expo-router";
 import { useMenu } from "@/context/MenuContext";
 import React, { useEffect } from "react";
+
+import { useUser } from "@/hooks/hookUser";
 const width = Dimensions.get("window").width;
 import Home from "../assets//images/house-door-fill.svg";
 import Favoritos from "../assets//images/star-fill.svg";
 import List from "../assets//images/list.svg";
 import Video from "../assets//images/file-play-fill.svg";
 import MenuConta from "./CompMenuConta";
+import { Image } from "expo-image";
+
 interface MenuProps {
   isVisible: boolean;
   page: any;
 }
 
 const Menu: React.FC<MenuProps> = ({ isVisible, page }) => {
+  const {dadosUser} = useUser();
   const router = useRouter();
   const translateY = React.useRef(new Animated.Value(0)).current;
   const { toggleMenu } = useMenu();
   useEffect(() => {
     Animated.timing(translateY, {
       toValue: isVisible ? 0 : 100,
-      duration: 200,
+      duration: 10,
       useNativeDriver: true,
     }).start();
   }, [isVisible]);
 
   return (
-    <>
+    
       <Animated.View
         style={[
           styles.container,
@@ -42,7 +47,7 @@ const Menu: React.FC<MenuProps> = ({ isVisible, page }) => {
         ]}
       >
         <TouchableOpacity
-          onPress={() => router.push("/")}
+          onPress={() => router.push("/home")}
           style={styles.optMenu}
         >
           <Home
@@ -78,16 +83,11 @@ const Menu: React.FC<MenuProps> = ({ isVisible, page }) => {
           onPress={() => toggleMenu(true)}
           style={styles.optMenu}
         >
-          <List
-            color={page === "conta" ? "white" : "#a7a7a7"}
-            width={21}
-            height={21}
-          />
+          <Image style={styles.img} source={{uri:dadosUser.photoURL}}/>
           <Text style={styles.optText}>Menu</Text>
         </TouchableOpacity>
       </Animated.View>
-      <MenuConta />
-    </>
+  
   );
 };
 export default Menu;
@@ -115,4 +115,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 10,
   },
+  img:{
+    objectFit: "cover",
+    width: 21,
+    height: 21,
+    borderRadius: 50,
+  }
 });

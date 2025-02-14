@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Alert, Button, Text, TouchableOpacity } from "react-native";
+import { Alert, Text, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useUser } from "@/hooks/hookUser";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,6 +13,7 @@ const HeaderWithButton = () => {
   useEffect(() => {
     const getButtonValue = async () => {
       const valorButtonPerfil = await AsyncStorage.getItem('valorButtonPerfil');
+      
       if (valorButtonPerfil) {
         setShowButton(JSON.parse(valorButtonPerfil));
       }
@@ -39,7 +40,7 @@ const HeaderWithButton = () => {
       await AsyncStorage.setItem('valorButtonPerfil', JSON.stringify(false));
       
       // Redireciona após a mudança de estado
-      router.push("/home");
+      router.push("/perfilHome");
       console.log("Botão pressionado, redirecionando...");
     }
   };

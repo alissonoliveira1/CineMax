@@ -16,7 +16,7 @@ import { getDocs, collection } from "firebase/firestore";
 import Menu from "@/components/menu";
 import Lixeira from "../assets/images/trash3-fill.svg";
 import { delFav } from "@/components/DelFav";
-
+import { useUser } from "@/hooks/hookUser";
 interface Movie {
   nome: string;
   sobre: string;
@@ -70,6 +70,8 @@ const Shimmer = () => {
 };
 
 const Favoritos = () => {
+  const {user} = useUser();
+  const userid = user ? user.uid : '';
   const userId = "R2IqDjgdrERzRKkV8gDUhX5nQp62";
   const [testdados, settestdados] = useState<Movie[]>([]);
   const [filteredData, setFilteredData] = useState<Movie[]>([]);
@@ -95,10 +97,11 @@ const Favoritos = () => {
   );
 
   useEffect(() => {
+  
     const getUsers = async () => {
       try {
         const querySnapshot = await getDocs(
-          collection(db, "cineData", userId, "favoritos")
+          collection(db, "cineData", userid, "favoritos")
         );
         let movies: Movie[] = [];
         querySnapshot.forEach((doc) => {

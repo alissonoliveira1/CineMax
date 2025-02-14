@@ -1,3 +1,7 @@
+import { auth } from "@/firebaseConfig";
+import { useUser } from "@/hooks/hookUser";
+import { Image } from "expo-image";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
@@ -10,10 +14,7 @@ import {
   Alert,
   Easing,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
-import { db } from "@/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
-import { Image } from "expo-image";
+import { useFocusEffect, useRouter } from "expo-router";
 import Translate from "@/assets/icons/translate.svg";
 import ChatRight from "@/assets/icons/chat-right-text.svg";
 import Exclamation from "@/assets/icons/exclamation-octagon.svg";
@@ -22,34 +23,31 @@ import Pencil from "@/assets/images/pencil-fill.svg";
 import Trash from "@/assets/icons/trash3.svg";
 import Exit from "@/assets/icons/exit.svg";
 import { useRegister } from "@/hooks/hookRegister";
-import { useUser } from "@/hooks/hookUser";
 import EsclamationCircle from "@/assets/icons/exclamation-circle.svg";
 import HeaderWithButton from "@/components/bottonRota";
+import { IconsLoad } from "@/components/IconsLoad";
+import { deleteUser } from "firebase/auth";
 const { width } = Dimensions.get("window");
 const height = Dimensions.get("window").height;
 const ITEM_SIZE = width * 0.5;
-
-
-const Perfil = () => {
+const Perfil = () => {  
+  const { dadosUser } = useUser();
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string>("");
   const { setConta } = useRegister();
-  const { user, dadosUser } = useUser();
+  const router  = useRouter();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [subiu, setSubiu] = useState(false);
   const altura = height - 70;
-  const [avatars, setAvatars] = useState<{ url: string; name: string }[]>([]);
-  const [blueLock, setblueLock] = useState<{ url: string; name: string }[]>([]);
-  const [marvel, setMarvel] = useState<{ url: string; name: string }[]>([]);
-  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string>("");
   const [name, setName] = useState<string>("");
   useEffect(() => {
     if (dadosUser) {
+      const timestamp = new Date().getTime(); // Evita cache de imagem antiga
       setCurrentAvatarUrl(
         dadosUser.photoURL
-          ? String(dadosUser.photoURL)
+          ? `${dadosUser.photoURL}?t=${timestamp}`
           : "https://i.ibb.co/pXcqy1M/Inserir-um-t-tulo.png"
       );
-  
-      setName(dadosUser.displayName ? String(dadosUser.displayName) : "Usuário Anônimo");
+      setName(dadosUser.displayName ? String(dadosUser.displayName) : "");
     }
   }, [dadosUser]);
 console.log('dados no perfil',dadosUser.displayName,dadosUser.photoURL)
@@ -68,29 +66,8 @@ console.log('dados no perfil',dadosUser.displayName,dadosUser.photoURL)
     });
   }, [subiu, altura, currentAvatarUrl]);
 
-  const getAvatars = useCallback(async () => {
-    try {
-      const docRef = doc(db, "cineUser", "avatar");
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data.icons) {
-          setAvatars(data.icons);
-          setblueLock(data.blueLock);
-          setMarvel(data.marvel);
-        } else {
-          console.log("No icons array found!");
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching avatars:", error);
-      Alert.alert("Erro", "Houve um erro ao buscar os dados.");
-    }
-  }, []);
+ 
 
-  useEffect(() => {
-    getAvatars();
-  }, [getAvatars]);
 
   useEffect(() => {
     if (dadosUser) {
@@ -103,17 +80,8 @@ console.log('dados no perfil',dadosUser.displayName,dadosUser.photoURL)
       }
     }
   }, [dadosUser]);
-const selectIcon = (e:any) =>{
-  setCurrentAvatarUrl(e);
-  setConta((prevState) => ({ ...prevState, perfil: e }));
-}
-  const renderItem = ({ item }: any) => {
-    return (
-      <TouchableOpacity onPress={()=>selectIcon(item.url)} style={{ width: ITEM_SIZE, alignItems: "center" }}>
-        <Animated.Image source={{ uri: item.url }} style={styles.image} />
-      </TouchableOpacity>
-    );
-  };
+
+ 
 
 
 
@@ -132,7 +100,16 @@ const selectIcon = (e:any) =>{
       setSubiu(false);
     }, [])
   );
-
+  const sairConta = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    deleteUser(user).then(() => {
+      console.log('usuario deletado')
+      router.push("/loginHome")
+    })
+    await AsyncStorage.removeItem('valorButtonPerfil');
+    
+  }
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={perfilIcons} style={styles.containerImgSelect}>
@@ -142,6 +119,8 @@ const selectIcon = (e:any) =>{
             uri:
               currentAvatarUrl,
           }}
+          placeholder={{uri:'https://i.ibb.co/pXcqy1M/Inserir-um-t-tulo.png'}}
+          transition={300} 
         />
         <View style={styles.containerIconPencel}>
           <Pencil color={"black"} width={19} height={19} />
@@ -343,7 +322,7 @@ const selectIcon = (e:any) =>{
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.opcoesPerfil}>
+        <TouchableOpacity onPress={sairConta} style={styles.opcoesPerfil}>
           <View
             style={{
               width: 50,
@@ -416,49 +395,9 @@ const selectIcon = (e:any) =>{
             </TouchableOpacity>
           </View>
         </View>
-        <View>
-          <Text style={styles.textIconsSelect}>Animes</Text>
-          <Animated.FlatList
-            data={avatars}
-              keyExtractor={(item) => item.url}
-            renderItem={renderItem}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={ITEM_SIZE}
-            decelerationRate="fast"
-            bounces={false}
-            style={{ flexGrow: 0 }}
-          />
-        </View>
-        <View style={{ flex: 1, marginTop: 20 }}>
-          <Text style={styles.textIconsSelect}>Blue lock</Text>
-          <Animated.FlatList
-            data={blueLock}
-            keyExtractor={(item) => item.url}
-            renderItem={renderItem}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={ITEM_SIZE}
-            decelerationRate="fast"
-            bounces={false}
-            style={{ flexGrow: 0 }}
-          />
-        </View>
-        <View style={{ flex: 1, marginTop: 20, marginBottom: 10 }}>
-          <Text style={styles.textIconsSelect}>Marvel</Text>
-          <Animated.FlatList
-            data={marvel}
-            keyExtractor={(item) => item.url}
-            renderItem={renderItem}
-            horizontal
-
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={ITEM_SIZE}
-            decelerationRate="fast"
-            bounces={false}
-            style={{ flexGrow: 0 }}
-          />
-        </View>
+      <IconsLoad dados='icons'/>
+      <IconsLoad dados='blueLock'/>
+      <IconsLoad dados='marvel'/>
       </Animated.View>
     </View>
   );
@@ -467,7 +406,7 @@ const selectIcon = (e:any) =>{
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 70,
+    paddingTop: 90,
     backgroundColor: "#0a1104",
     alignItems: "center",
   },

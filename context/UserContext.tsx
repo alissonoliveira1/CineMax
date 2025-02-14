@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { db } from "@/firebaseConfig";
 
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, onSnapshot } from "firebase/firestore";
 interface UserContextType {
   user: User | null;
   dadosUser: { photoURL: String; displayName: String };
@@ -37,22 +37,18 @@ export const UserProvider = ({ children }: any) => {
   useEffect(() => {
     if (user?.uid) {
       const refDoc = doc(db, "cineData", user.uid);
-
-      getDoc(refDoc)
-        .then((docSnap) => {
-          if (docSnap.exists()) {
-            setDadosUser(
-              docSnap.data() as { photoURL: string; displayName: string }
-            );
-          } else {
-            console.log("Documento não encontrado!");
-          }
-        })
-        .catch((error) => {
-          console.error("Erro ao buscar o documento:", error);
-        });
-    } else {
-      console.log("Usuário não está autenticado ou UID não encontrado.");
+  
+      const unsubscribe = onSnapshot(refDoc, (docSnap) => {
+        if (docSnap.exists()) {
+          setDadosUser(docSnap.data() as { photoURL: string; displayName: string });
+          console.log("Documento encontrado:", docSnap.data());
+        } else {
+          console.log("Documento não encontrado!");
+        }
+      });
+  
+      // Removendo o listener ao desmontar o componente
+      return () => unsubscribe();
     }
   }, [user]);
 
